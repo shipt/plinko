@@ -2,18 +2,22 @@ package plinko
 
 import "fmt"
 
+type State string
+type Trigger string
+type SideEffect string
+
 type PlinkoData struct {
-	States map[string]*stateDefinition
+	States map[State]*stateDefinition
 }
 
-func (pd *PlinkoData) CreateState(state string) *stateDefinition {
+func (pd *PlinkoData) CreateState(state State) *stateDefinition {
 	if _, ok := pd.States[state]; ok {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}
 
 	sd := stateDefinition{
 		State:    state,
-		Triggers: make(map[string]*TriggerDefinition),
+		Triggers: make(map[Trigger]*TriggerDefinition),
 	}
 
 	pd.States[state] = &sd
@@ -26,21 +30,21 @@ type StateDefinition interface {
 }
 
 type TriggerDefinition struct {
-	Name             string
-	DestinationState string
-	SideEffect       string
+	Name             Trigger
+	DestinationState State
+	SideEffect       SideEffect
 }
 
 type stateDefinition struct {
-	State    string
-	Triggers map[string]*TriggerDefinition
+	State    State
+	Triggers map[Trigger]*TriggerDefinition
 }
 
 type PlinkDataStructure struct {
 	States map[string]StateDefinition
 }
 
-func (sd *stateDefinition) Permit(triggerName string, destinationState string, sideEffect string) *stateDefinition {
+func (sd *stateDefinition) Permit(triggerName Trigger, destinationState State, sideEffect SideEffect) *stateDefinition {
 	if _, ok := sd.Triggers[triggerName]; ok {
 		panic(fmt.Sprintf("Trigger: %s - has already been defined, plinko configuration invalid.", triggerName))
 	}

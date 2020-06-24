@@ -9,7 +9,7 @@ import (
 func TestStateDefinition(t *testing.T) {
 	state := stateDefinition{
 		State:    "NewOrder",
-		Triggers: make(map[string]*TriggerDefinition),
+		Triggers: make(map[Trigger]*TriggerDefinition),
 	}
 
 	assert.Panics(t, func() {
@@ -20,7 +20,7 @@ func TestStateDefinition(t *testing.T) {
 
 	state = stateDefinition{
 		State:    "NewOrder",
-		Triggers: make(map[string]*TriggerDefinition),
+		Triggers: make(map[Trigger]*TriggerDefinition),
 	}
 
 	assert.NotPanics(t, func() {
@@ -32,7 +32,7 @@ func TestStateDefinition(t *testing.T) {
 
 func TestPlinkoDefinition(t *testing.T) {
 	plinko := PlinkoData{
-		States: make(map[string]*stateDefinition),
+		States: make(map[State]*stateDefinition),
 	}
 
 	assert.NotPanics(t, func() {
@@ -57,8 +57,22 @@ func TestPlinkoDefinition(t *testing.T) {
 	})
 }
 
+const (
+	NewOrder State = "NewOrder"
+	Reviewed State = "Reviewed"
+)
+
 func TestPlinkoRunner(t *testing.T) {
+
 	/* plinkoDefinition := Plinko.CreateDefinition()
+
+	plinkoDefinition.
+		State("foo").
+		PermitIf("trigger", "state", func() { return state.IsValidNumber() }).
+		PermitIf("trigger", "state2", func() { return !state.IsValidNumber() }).
+		PermitReentry("trigger")
+
+
 
 	plinko, compilerOutput, err := Plinko.Compile(plinkoDefinition)
 

@@ -4,7 +4,7 @@ The project, as well as the example above was inspired by Simple State Machine a
 
 ## Features
 
-* Geenraic suppor for states and triggers
+* Simple support for states and triggers
 * Entry/Exit events for states
 
 Some useful extensions are also provided:
