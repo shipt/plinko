@@ -13,9 +13,9 @@ func TestStateDefinition(t *testing.T) {
 	}
 
 	assert.Panics(t, func() {
-		state.AddTrigger("Submit", "PublishedOrder", "OnPublish").
-			AddTrigger("Review", "ReviewOrder", "OnReview").
-			AddTrigger("Submit", "foo", "bar")
+		state.Permit("Submit", "PublishedOrder", "OnPublish").
+			Permit("Review", "ReviewOrder", "OnReview").
+			Permit("Submit", "foo", "bar")
 	})
 
 	state = stateDefinition{
@@ -24,8 +24,8 @@ func TestStateDefinition(t *testing.T) {
 	}
 
 	assert.NotPanics(t, func() {
-		state.AddTrigger("Submit", "PublishedOrder", "OnPublish").
-			AddTrigger("Review", "ReviewOrder", "OnReview")
+		state.Permit("Submit", "PublishedOrder", "OnPublish").
+			Permit("Review", "ReviewOrder", "OnReview")
 	})
 
 }
@@ -37,8 +37,10 @@ func TestPlinkoDefinition(t *testing.T) {
 
 	assert.NotPanics(t, func() {
 		plinko.CreateState("NewOrder").
-			AddTrigger("Submit", "PublishedOrder", "OnPublish").
-			AddTrigger("Review", "ReviewOrder", "OnReview")
+			//			OnEntry()
+			//			OnExit()
+			Permit("Submit", "PublishedOrder", "OnPublish").
+			Permit("Review", "ReviewOrder", "OnReview")
 
 		plinko.CreateState("PublishedOrder")
 		plinko.CreateState("ReviewOrder")
@@ -46,12 +48,25 @@ func TestPlinkoDefinition(t *testing.T) {
 
 	assert.Panics(t, func() {
 		plinko.CreateState("NewOrder").
-			AddTrigger("Submit", "PublishedOrder", "OnPublish").
-			AddTrigger("Review", "ReviewOrder", "OnReview")
+			Permit("Submit", "PublishedOrder", "OnPublish").
+			Permit("Review", "ReviewOrder", "OnReview")
 
 		plinko.CreateState("PublishedOrder")
 		plinko.CreateState("ReviewOrder")
 		plinko.CreateState("NewOrder")
 	})
+}
+
+func TestPlinkoRunner(t *testing.T) {
+	/* plinkoDefinition := Plinko.CreateDefinition()
+
+	plinko, compilerOutput, err := Plinko.Compile(plinkoDefinition)
+
+
+	plinko.GetTriggers(state)
+	plinko.Fire(state, "Submit", item )
+
+
+	*/
 
 }

@@ -40,7 +40,7 @@ type PlinkDataStructure struct {
 	States map[string]StateDefinition
 }
 
-func (sd *stateDefinition) AddTrigger(triggerName string, destinationState string, sideEffect string) *stateDefinition {
+func (sd *stateDefinition) Permit(triggerName string, destinationState string, sideEffect string) *stateDefinition {
 	if _, ok := sd.Triggers[triggerName]; ok {
 		panic(fmt.Sprintf("Trigger: %s - has already been defined, plinko configuration invalid.", triggerName))
 	}
