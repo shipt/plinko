@@ -6,11 +6,25 @@ type State string
 type Trigger string
 type SideEffect string
 
-type PlinkoData struct {
+type PlinkoDefinition interface {
+	CreateState(state State) *stateDefinition
+	//Compile()
+	//RenderPlantUml()
+}
+
+type plinkoDefinition struct {
 	States map[State]*stateDefinition
 }
 
-func (pd *PlinkoData) CreateState(state State) *stateDefinition {
+func CreateDefinition() PlinkoDefinition {
+	pd := plinkoDefinition{
+		States: make(map[State]*stateDefinition),
+	}
+
+	return &pd
+}
+
+func (pd *plinkoDefinition) CreateState(state State) *stateDefinition {
 	if _, ok := pd.States[state]; ok {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}

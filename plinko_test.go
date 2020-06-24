@@ -31,7 +31,7 @@ func TestStateDefinition(t *testing.T) {
 }
 
 func TestPlinkoDefinition(t *testing.T) {
-	plinko := PlinkoData{
+	plinko := plinkoDefinition{
 		States: make(map[State]*stateDefinition),
 	}
 
@@ -55,6 +55,14 @@ func TestPlinkoDefinition(t *testing.T) {
 		plinko.CreateState("ReviewOrder")
 		plinko.CreateState("NewOrder")
 	})
+}
+
+func TestPlinkoAsInterface(t *testing.T) {
+	p := CreateDefinition()
+
+	p.CreateState("NewOrder").
+		Permit("Submit", "PublishedOrder", "OnPublish").
+		Permit("Review", "ReviewedOrder", "OnReview")
 }
 
 const (
