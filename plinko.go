@@ -49,8 +49,6 @@ func (sd *stateDefinition) AddTrigger(triggerName string, destinationState strin
 		DestinationState: destinationState,
 		SideEffect:       sideEffect,
 	}
-
-	fmt.Printf("\n\n%+v\n\n", sd.Triggers)
 	sd.Triggers[triggerName] = &td
 
 	return sd
