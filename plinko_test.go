@@ -106,7 +106,6 @@ func TestTriggerlessStateCompile(t *testing.T) {
 	assert.Equal(t, 1, len(compilerOutput.Messages))
 	assert.Equal(t, CompileWarning, compilerOutput.Messages[0].CompileMessage)
 	assert.Equal(t, "State 'PublishedOrder' is a state without any triggers (deadend state).", compilerOutput.Messages[0].Message)
-
 }
 
 func TestUmlDiagramming(t *testing.T) {

@@ -45,8 +45,8 @@ func (td transitionDef) GetTrigger() Trigger {
 	return td.trigger
 }
 
-func (psm plinkoStateMachine) Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error) {
-	state := payload.GetState()
+func (psm plinkoStateMachine) Fire(payload *PlinkoPayload, trigger Trigger) (*PlinkoPayload, error) {
+	state := (*payload).GetState()
 	sd2 := (*psm.pd.States)[state]
 
 	if sd2 == nil {
@@ -67,11 +67,11 @@ func (psm plinkoStateMachine) Fire(payload PlinkoPayload, trigger Trigger) (Plin
 	}
 
 	if sd2.OnExitFn != nil {
-		sd2.OnExitFn(&payload, td)
+		sd2.OnExitFn(payload, td)
 	}
 
 	if destinationState.OnEntryFn != nil {
-		destinationState.OnEntryFn(&payload, td)
+		destinationState.OnEntryFn(payload, td)
 	}
 
 	return payload, nil
@@ -165,11 +165,16 @@ func (pd plinkoDefinition) Compile() PlinkoCompilerOutput {
 		}
 	}
 
-	compilerOutput := PlinkoCompilerOutput{
-		Messages: compilerMessages,
+	psm := plinkoStateMachine{
+		pd: pd,
 	}
 
-	return compilerOutput
+	co := PlinkoCompilerOutput{
+		Messages:           compilerMessages,
+		PlinkoStateMachine: psm,
+	}
+
+	return &co
 }
 
 func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
