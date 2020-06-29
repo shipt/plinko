@@ -14,7 +14,7 @@ type PlinkoCompilerOutput struct {
 }
 
 type PlinkoStateMachine interface {
-	Fire(payload *PlinkoPayload) (*PlinkoPayload, error)
+	Fire(payload *PlinkoPayload, trigger Trigger) (*PlinkoPayload, error)
 }
 
 type plinkoStateMachine struct {
@@ -174,7 +174,7 @@ func (pd plinkoDefinition) Compile() PlinkoCompilerOutput {
 		PlinkoStateMachine: psm,
 	}
 
-	return &co
+	return co
 }
 
 func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
