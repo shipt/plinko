@@ -24,11 +24,6 @@ func TestStateDefinition(t *testing.T) {
 		Triggers: make(map[Trigger]*TriggerDefinition),
 	}
 
-	assert.NotPanics(t, func() {
-		state.Permit("Submit", "PublishedOrder", "OnPublish").
-			Permit("Review", "ReviewOrder", "OnReview")
-	})
-
 }
 
 func TestPlinkoDefinition(t *testing.T) {
@@ -94,7 +89,10 @@ func TestCompile(t *testing.T) {
 	p.CreateState(NewOrder).
 		Permit("Submit", "PublishedOrder", "OnPublish")
 
-	assert.Equal(t, 1, len(p.Compile()))
+	messages := p.Compile()
+	assert.Equal(t, 1, len(messages))
+	assert.Equal(t, CompileError, messages[0].CompileMessage)
+	assert.Equal(t, "State 'PublishedOrder' undefined: Trigger 'Submit' declares a transition to this undefined state.", messages[0].Message)
 
 }
 

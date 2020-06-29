@@ -14,7 +14,7 @@ func CreateDefinition() PlinkoDefinition {
 
 	plinko.abs = abstractSyntax{}
 
-	return plinko
+	return &plinko
 }
 
 type abstractSyntax struct {
@@ -62,7 +62,7 @@ func (pd plinkoDefinition) Compile() []CompilerMessage {
 	return compilerMessages
 }
 
-func (pd plinkoDefinition) CreateState(state State) StateDefinition {
+func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
 	if _, ok := (*pd.States)[state]; ok {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}
