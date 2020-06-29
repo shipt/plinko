@@ -20,6 +20,7 @@ func CreateDefinition() PlinkoDefinition {
 type abstractSyntax struct {
 	States             []State
 	TriggerDefinitions []TriggerDefinition
+	StateDefinitions   []*stateDefinition
 }
 
 type PlinkoPayload interface {
@@ -59,6 +60,15 @@ func (pd plinkoDefinition) Compile() []CompilerMessage {
 		}
 	}
 
+	for _, def := range pd.abs.StateDefinitions {
+		if len(def.Triggers) == 0 {
+			compilerMessages = append(compilerMessages, CompilerMessage{
+				CompileMessage: CompileWarning,
+				Message:        fmt.Sprintf("State '%s' is a state without any triggers (deadend state).", def.State),
+			})
+		}
+	}
+
 	return compilerMessages
 }
 
@@ -67,8 +77,6 @@ func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}
 
-	pd.abs.States = append(pd.abs.States, state)
-
 	sd := stateDefinition{
 		State:    state,
 		Triggers: make(map[Trigger]*TriggerDefinition),
@@ -76,6 +84,9 @@ func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
 	}
 
 	(*pd.States)[state] = &sd
+
+	pd.abs.States = append(pd.abs.States, state)
+	pd.abs.StateDefinitions = append(pd.abs.StateDefinitions, &sd)
 
 	return sd
 }

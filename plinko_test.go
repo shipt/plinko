@@ -83,7 +83,7 @@ func TestEntryAndExitFunctions(t *testing.T) {
 	assert.NotNil(t, stateDef.OnEntryFn)
 }
 
-func TestCompile(t *testing.T) {
+func TestUndefinedStateCompile(t *testing.T) {
 	p := CreateDefinition()
 
 	p.CreateState(NewOrder).
@@ -93,6 +93,19 @@ func TestCompile(t *testing.T) {
 	assert.Equal(t, 1, len(messages))
 	assert.Equal(t, CompileError, messages[0].CompileMessage)
 	assert.Equal(t, "State 'PublishedOrder' undefined: Trigger 'Submit' declares a transition to this undefined state.", messages[0].Message)
+}
+
+func TestTriggerlessStateCompile(t *testing.T) {
+	p := CreateDefinition()
+
+	p.CreateState(NewOrder).
+		Permit("Submit", "PublishedOrder", "OnPublish")
+	p.CreateState("PublishedOrder")
+
+	messages := p.Compile()
+	assert.Equal(t, 1, len(messages))
+	assert.Equal(t, CompileWarning, messages[0].CompileMessage)
+	assert.Equal(t, "State 'PublishedOrder' is a state without any triggers (deadend state).", messages[0].Message)
 
 }
 
