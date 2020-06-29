@@ -6,26 +6,30 @@ type State string
 type Trigger string
 type SideEffect string
 
+func CreateDefinition() PlinkoDefinition {
+	stateMap := make(map[State]*stateDefinition)
+	plinko := plinkoDefinition{
+		States: &stateMap,
+	}
+
+	return plinko
+}
+
+type PlinkoPayload interface {
+}
+
 type PlinkoDefinition interface {
-	CreateState(state State) *stateDefinition
+	CreateState(state State) StateDefinition
 	//Compile()
 	//RenderPlantUml()
 }
 
 type plinkoDefinition struct {
-	States map[State]*stateDefinition
+	States *map[State]*stateDefinition
 }
 
-func CreateDefinition() PlinkoDefinition {
-	pd := plinkoDefinition{
-		States: make(map[State]*stateDefinition),
-	}
-
-	return &pd
-}
-
-func (pd *plinkoDefinition) CreateState(state State) *stateDefinition {
-	if _, ok := pd.States[state]; ok {
+func (pd plinkoDefinition) CreateState(state State) StateDefinition {
+	if _, ok := (*pd.States)[state]; ok {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}
 
@@ -34,13 +38,15 @@ func (pd *plinkoDefinition) CreateState(state State) *stateDefinition {
 		Triggers: make(map[Trigger]*TriggerDefinition),
 	}
 
-	pd.States[state] = &sd
+	(*pd.States)[state] = &sd
 
-	return &sd
+	return sd
 }
 
 type StateDefinition interface {
-	State() string
+	//State() string
+	OnEntry(entryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition
+	Permit(triggerName Trigger, destinationState State, sideEffect SideEffect) StateDefinition
 }
 
 type TriggerDefinition struct {
@@ -52,13 +58,21 @@ type TriggerDefinition struct {
 type stateDefinition struct {
 	State    State
 	Triggers map[Trigger]*TriggerDefinition
+
+	OnEntryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)
 }
 
 type PlinkDataStructure struct {
-	States map[string]StateDefinition
+	States map[State]StateDefinition
 }
 
-func (sd *stateDefinition) Permit(triggerName Trigger, destinationState State, sideEffect SideEffect) *stateDefinition {
+func (sd stateDefinition) OnEntry(entryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition {
+	sd.OnEntryFn = entryFn
+
+	return sd
+}
+
+func (sd stateDefinition) Permit(triggerName Trigger, destinationState State, sideEffect SideEffect) StateDefinition {
 	if _, ok := sd.Triggers[triggerName]; ok {
 		panic(fmt.Sprintf("Trigger: %s - has already been defined, plinko configuration invalid.", triggerName))
 	}

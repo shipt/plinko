@@ -31,8 +31,9 @@ func TestStateDefinition(t *testing.T) {
 }
 
 func TestPlinkoDefinition(t *testing.T) {
+	stateMap := make(map[State]*stateDefinition)
 	plinko := plinkoDefinition{
-		States: make(map[State]*stateDefinition),
+		States: &stateMap,
 	}
 
 	assert.NotPanics(t, func() {
@@ -70,7 +71,22 @@ const (
 	Reviewed State = "Reviewed"
 )
 
+func IsPlatform(pp PlinkoPayload) bool {
+	return true
+}
+
+func OnNewOrderEntry(pp *PlinkoPayload) (*PlinkoPayload, error) {
+	return pp, nil
+}
+
 func TestPlinkoRunner(t *testing.T) {
+
+	pd := CreateDefinition()
+
+	pd.CreateState("NewOrder").
+		OnEntry(OnNewOrderEntry).
+		Permit("Submit", "PublishedOrder", "OnPublish").
+		Permit("Review", "ReviewedOrder", "OnReview")
 
 	/* plinkoDefinition := Plinko.CreateDefinition()
 
