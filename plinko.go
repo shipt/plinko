@@ -8,6 +8,11 @@ type State string
 type Trigger string
 type Uml string
 
+type PlinkoCompilerOutput struct {
+	PlinkoStateMachine PlinkoStateMachine
+	Messages           []CompilerMessage
+}
+
 type PlinkoStateMachine interface {
 	Fire(payload *PlinkoPayload) (*PlinkoPayload, error)
 }
@@ -95,7 +100,7 @@ type PlinkoPayload interface {
 
 type PlinkoDefinition interface {
 	CreateState(state State) StateDefinition
-	Compile() []CompilerMessage
+	Compile() PlinkoCompilerOutput
 	RenderUml() (Uml, error)
 }
 
@@ -117,7 +122,7 @@ func findDestinationState(states []State, searchState State) bool {
 func (pd plinkoDefinition) RenderUml() (Uml, error) {
 	cm := pd.Compile()
 
-	for _, def := range cm {
+	for _, def := range cm.Messages {
 		if def.CompileMessage == CompileError {
 			return "", fmt.Errorf("critical errors exist in definition")
 		}
@@ -138,7 +143,7 @@ func (pd plinkoDefinition) RenderUml() (Uml, error) {
 	return uml, nil
 }
 
-func (pd plinkoDefinition) Compile() []CompilerMessage {
+func (pd plinkoDefinition) Compile() PlinkoCompilerOutput {
 
 	var compilerMessages []CompilerMessage
 
@@ -160,7 +165,11 @@ func (pd plinkoDefinition) Compile() []CompilerMessage {
 		}
 	}
 
-	return compilerMessages
+	compilerOutput := PlinkoCompilerOutput{
+		Messages: compilerMessages,
+	}
+
+	return compilerOutput
 }
 
 func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
@@ -208,7 +217,7 @@ type stateDefinition struct {
 	abs *abstractSyntax
 }
 
-type PlinkDataStructure struct {
+type PlinkoDataStructure struct {
 	States map[State]StateDefinition
 }
 

@@ -89,10 +89,10 @@ func TestUndefinedStateCompile(t *testing.T) {
 	p.CreateState(NewOrder).
 		Permit("Submit", "PublishedOrder")
 
-	messages := p.Compile()
-	assert.Equal(t, 1, len(messages))
-	assert.Equal(t, CompileError, messages[0].CompileMessage)
-	assert.Equal(t, "State 'PublishedOrder' undefined: Trigger 'Submit' declares a transition to this undefined state.", messages[0].Message)
+	compilerOutput := p.Compile()
+	assert.Equal(t, 1, len(compilerOutput.Messages))
+	assert.Equal(t, CompileError, compilerOutput.Messages[0].CompileMessage)
+	assert.Equal(t, "State 'PublishedOrder' undefined: Trigger 'Submit' declares a transition to this undefined state.", compilerOutput.Messages[0].Message)
 }
 
 func TestTriggerlessStateCompile(t *testing.T) {
@@ -102,14 +102,38 @@ func TestTriggerlessStateCompile(t *testing.T) {
 		Permit("Submit", "PublishedOrder")
 	p.CreateState("PublishedOrder")
 
-	messages := p.Compile()
-	assert.Equal(t, 1, len(messages))
-	assert.Equal(t, CompileWarning, messages[0].CompileMessage)
-	assert.Equal(t, "State 'PublishedOrder' is a state without any triggers (deadend state).", messages[0].Message)
+	compilerOutput := p.Compile()
+	assert.Equal(t, 1, len(compilerOutput.Messages))
+	assert.Equal(t, CompileWarning, compilerOutput.Messages[0].CompileMessage)
+	assert.Equal(t, "State 'PublishedOrder' is a state without any triggers (deadend state).", compilerOutput.Messages[0].Message)
 
 }
 
 func TestUmlDiagramming(t *testing.T) {
+	p := CreateDefinition()
+
+	p.CreateState(NewOrder).
+		Permit("Submit", "PublishedOrder").
+		Permit("Review", "UnderReview")
+
+	p.CreateState("PublishedOrder")
+
+	p.CreateState("UnderReview").
+		Permit("CompleteReview", "PublishedOrder").
+		Permit("RejectOrder", "RejectedOrder")
+
+	p.CreateState("RejectedOrder")
+
+	uml, err := p.RenderUml()
+
+	fmt.Println(uml)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "@startuml\n[*] -> NewOrder \nNewOrder", string(uml)[0:35])
+	assert.Equal(t, "\n@enduml", string(uml)[len(uml)-8:])
+}
+
+func TestStateMachine(t *testing.T) {
 	p := CreateDefinition()
 
 	p.CreateState(NewOrder).
