@@ -70,11 +70,11 @@ func TestEntryAndExitFunctions(t *testing.T) {
 	assert.Nil(t, stateDef.OnExitFn)
 	assert.Nil(t, stateDef.OnEntryFn)
 
-	ps = ps.OnEntry(func(pp *PlinkoPayload) (*PlinkoPayload, error) {
+	ps = ps.OnEntry(func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error) {
 		return nil, fmt.Errorf("misc error")
 	})
 
-	ps = ps.OnExit(func(pp *PlinkoPayload) (*PlinkoPayload, error) {
+	ps = ps.OnExit(func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error) {
 		return nil, fmt.Errorf("misc error")
 	})
 
@@ -142,7 +142,7 @@ func IsPlatform(pp PlinkoPayload) bool {
 	return true
 }
 
-func OnNewOrderEntry(pp *PlinkoPayload) (*PlinkoPayload, error) {
+func OnNewOrderEntry(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error) {
 	return pp, nil
 }
 

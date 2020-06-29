@@ -1,11 +1,77 @@
 package plinko
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type State string
 type Trigger string
 type SideEffect string
 type Uml string
+
+type PlinkoStateMachine interface {
+	Fire(payload *PlinkoPayload) (*PlinkoPayload, error)
+}
+
+type plinkoStateMachine struct {
+	pd plinkoDefinition
+}
+
+type TransitionInfo interface {
+	GetSource() State
+	GetDestination() State
+	GetTrigger() Trigger
+}
+
+type transitionDef struct {
+	source      State
+	destination State
+	trigger     Trigger
+}
+
+func (td transitionDef) GetSource() State {
+	return td.source
+}
+
+func (td transitionDef) GetDestination() State {
+	return td.destination
+}
+
+func (td transitionDef) GetTrigger() Trigger {
+	return td.trigger
+}
+
+func (psm plinkoStateMachine) Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error) {
+	state := payload.GetState()
+	sd2 := (*psm.pd.States)[state]
+
+	if sd2 == nil {
+		return payload, fmt.Errorf("State not found in definition of states: %s", state)
+	}
+
+	triggerData := sd2.Triggers[trigger]
+	if sd2 == nil {
+		return payload, fmt.Errorf("Trigger '%s' not found in definition for state: %s", trigger, state)
+	}
+
+	destinationState := (*psm.pd.States)[triggerData.DestinationState]
+
+	td := transitionDef{
+		source:      state,
+		destination: destinationState.State,
+		trigger:     trigger,
+	}
+
+	if sd2.OnExitFn != nil {
+		sd2.OnExitFn(&payload, td)
+	}
+
+	if destinationState.OnEntryFn != nil {
+		destinationState.OnEntryFn(&payload, td)
+	}
+
+	return payload, nil
+}
 
 func CreateDefinition() PlinkoDefinition {
 	stateMap := make(map[State]*stateDefinition)
@@ -25,6 +91,7 @@ type abstractSyntax struct {
 }
 
 type PlinkoPayload interface {
+	GetState() State
 }
 
 type PlinkoDefinition interface {
@@ -62,7 +129,6 @@ func (pd plinkoDefinition) RenderUml() (Uml, error) {
 	uml += Uml(fmt.Sprintf("[*] -> %s \n", pd.abs.StateDefinitions[0].State))
 
 	for _, sd := range pd.abs.StateDefinitions {
-		fmt.Printf("sd: %+v \n", sd)
 
 		for _, td := range sd.Triggers {
 			uml += Uml(fmt.Sprintf("%s --> %s : %s\n", sd.State, td.DestinationState, td.Name))
@@ -114,8 +180,6 @@ func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
 	pd.abs.States = append(pd.abs.States, state)
 	pd.abs.StateDefinitions = append(pd.abs.StateDefinitions, &sd)
 
-	fmt.Printf("data: %+v\n", sd)
-
 	return sd
 }
 
@@ -124,8 +188,8 @@ type compileInfo struct {
 
 type StateDefinition interface {
 	//State() string
-	OnEntry(entryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition
-	OnExit(exitFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition
+	OnEntry(entryFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition
+	OnExit(exitFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition
 	Permit(triggerName Trigger, destinationState State, sideEffect SideEffect) StateDefinition
 	//TBD: AllowReentrance
 }
@@ -140,8 +204,8 @@ type stateDefinition struct {
 	State    State
 	Triggers map[Trigger]*TriggerDefinition
 
-	OnEntryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)
-	OnExitFn  func(pp *PlinkoPayload) (*PlinkoPayload, error)
+	OnEntryFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)
+	OnExitFn  func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)
 
 	abs *abstractSyntax
 }
@@ -150,13 +214,13 @@ type PlinkDataStructure struct {
 	States map[State]StateDefinition
 }
 
-func (sd stateDefinition) OnEntry(entryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition {
+func (sd stateDefinition) OnEntry(entryFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition {
 	sd.OnEntryFn = entryFn
 
 	return sd
 }
 
-func (sd stateDefinition) OnExit(exitFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition {
+func (sd stateDefinition) OnExit(exitFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition {
 	sd.OnExitFn = exitFn
 
 	return sd
