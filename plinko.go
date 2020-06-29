@@ -6,7 +6,6 @@ import (
 
 type State string
 type Trigger string
-type SideEffect string
 type Uml string
 
 type PlinkoStateMachine interface {
@@ -190,14 +189,13 @@ type StateDefinition interface {
 	//State() string
 	OnEntry(entryFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition
 	OnExit(exitFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition
-	Permit(triggerName Trigger, destinationState State, sideEffect SideEffect) StateDefinition
+	Permit(triggerName Trigger, destinationState State) StateDefinition
 	//TBD: AllowReentrance
 }
 
 type TriggerDefinition struct {
 	Name             Trigger
 	DestinationState State
-	SideEffect       SideEffect
 }
 
 type stateDefinition struct {
@@ -226,14 +224,13 @@ func (sd stateDefinition) OnExit(exitFn func(pp *PlinkoPayload, transitionInfo T
 	return sd
 }
 
-func (sd stateDefinition) Permit(triggerName Trigger, destinationState State, sideEffect SideEffect) StateDefinition {
+func (sd stateDefinition) Permit(triggerName Trigger, destinationState State) StateDefinition {
 	if _, ok := sd.Triggers[triggerName]; ok {
 		panic(fmt.Sprintf("Trigger: %s - has already been defined, plinko configuration invalid.", triggerName))
 	}
 	td := TriggerDefinition{
 		Name:             triggerName,
 		DestinationState: destinationState,
-		SideEffect:       sideEffect,
 	}
 	sd.Triggers[triggerName] = &td
 

@@ -14,9 +14,9 @@ func TestStateDefinition(t *testing.T) {
 	}
 
 	assert.Panics(t, func() {
-		state.Permit("Submit", "PublishedOrder", "OnPublish").
-			Permit("Review", "ReviewOrder", "OnReview").
-			Permit("Submit", "foo", "bar")
+		state.Permit("Submit", "PublishedOrder").
+			Permit("Review", "ReviewOrder").
+			Permit("Submit", "foo")
 	})
 
 	state = stateDefinition{
@@ -36,8 +36,8 @@ func TestPlinkoDefinition(t *testing.T) {
 		plinko.CreateState("NewOrder").
 			//			OnEntry()
 			//			OnExit()
-			Permit("Submit", "PublishedOrder", "OnPublish").
-			Permit("Review", "ReviewOrder", "OnReview")
+			Permit("Submit", "PublishedOrder").
+			Permit("Review", "ReviewOrder")
 
 		plinko.CreateState("PublishedOrder")
 		plinko.CreateState("ReviewOrder")
@@ -45,8 +45,8 @@ func TestPlinkoDefinition(t *testing.T) {
 
 	assert.Panics(t, func() {
 		plinko.CreateState("NewOrder").
-			Permit("Submit", "PublishedOrder", "OnPublish").
-			Permit("Review", "ReviewOrder", "OnReview")
+			Permit("Submit", "PublishedOrder").
+			Permit("Review", "ReviewOrder")
 
 		plinko.CreateState("PublishedOrder")
 		plinko.CreateState("ReviewOrder")
@@ -58,8 +58,8 @@ func TestPlinkoAsInterface(t *testing.T) {
 	p := CreateDefinition()
 
 	p.CreateState("NewOrder").
-		Permit("Submit", "PublishedOrder", "OnPublish").
-		Permit("Review", "ReviewedOrder", "OnReview")
+		Permit("Submit", "PublishedOrder").
+		Permit("Review", "ReviewedOrder")
 }
 
 func TestEntryAndExitFunctions(t *testing.T) {
@@ -87,7 +87,7 @@ func TestUndefinedStateCompile(t *testing.T) {
 	p := CreateDefinition()
 
 	p.CreateState(NewOrder).
-		Permit("Submit", "PublishedOrder", "OnPublish")
+		Permit("Submit", "PublishedOrder")
 
 	messages := p.Compile()
 	assert.Equal(t, 1, len(messages))
@@ -99,7 +99,7 @@ func TestTriggerlessStateCompile(t *testing.T) {
 	p := CreateDefinition()
 
 	p.CreateState(NewOrder).
-		Permit("Submit", "PublishedOrder", "OnPublish")
+		Permit("Submit", "PublishedOrder")
 	p.CreateState("PublishedOrder")
 
 	messages := p.Compile()
@@ -113,14 +113,14 @@ func TestUmlDiagramming(t *testing.T) {
 	p := CreateDefinition()
 
 	p.CreateState(NewOrder).
-		Permit("Submit", "PublishedOrder", "OnPublish").
-		Permit("Review", "UnderReview", "OnReview")
+		Permit("Submit", "PublishedOrder").
+		Permit("Review", "UnderReview")
 
 	p.CreateState("PublishedOrder")
 
 	p.CreateState("UnderReview").
-		Permit("CompleteReview", "PublishedOrder", "OnCompletedReview").
-		Permit("RejectOrder", "RejectedOrder", "OnRejectOrder")
+		Permit("CompleteReview", "PublishedOrder").
+		Permit("RejectOrder", "RejectedOrder")
 
 	p.CreateState("RejectedOrder")
 
@@ -152,8 +152,8 @@ func TestPlinkoRunner(t *testing.T) {
 
 	pd.CreateState("NewOrder").
 		OnEntry(OnNewOrderEntry).
-		Permit("Submit", "PublishedOrder", "OnPublish").
-		Permit("Review", "ReviewedOrder", "OnReview")
+		Permit("Submit", "PublishedOrder").
+		Permit("Review", "ReviewedOrder")
 
 	/* plinkoDefinition := Plinko.CreateDefinition()
 
