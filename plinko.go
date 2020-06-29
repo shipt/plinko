@@ -12,7 +12,14 @@ func CreateDefinition() PlinkoDefinition {
 		States: &stateMap,
 	}
 
+	plinko.abs = abstractSyntax{}
+
 	return plinko
+}
+
+type abstractSyntax struct {
+	States             []State
+	TriggerDefinitions []TriggerDefinition
 }
 
 type PlinkoPayload interface {
@@ -20,12 +27,39 @@ type PlinkoPayload interface {
 
 type PlinkoDefinition interface {
 	CreateState(state State) StateDefinition
-	//Compile()
+	Compile() []CompilerMessage
 	//RenderPlantUml()
 }
 
 type plinkoDefinition struct {
 	States *map[State]*stateDefinition
+	abs    abstractSyntax
+}
+
+func findDestinationState(states []State, searchState State) bool {
+	for _, searchVal := range states {
+		if searchVal == searchState {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (pd plinkoDefinition) Compile() []CompilerMessage {
+
+	var compilerMessages []CompilerMessage
+
+	for _, def := range pd.abs.TriggerDefinitions {
+		if !findDestinationState(pd.abs.States, def.DestinationState) {
+			compilerMessages = append(compilerMessages, CompilerMessage{
+				CompileMessage: CompileError,
+				Message:        fmt.Sprintf("State '%s' undefined: Trigger '%s' declares a transition to this undefined state.", def.DestinationState, def.Name),
+			})
+		}
+	}
+
+	return compilerMessages
 }
 
 func (pd plinkoDefinition) CreateState(state State) StateDefinition {
@@ -33,9 +67,12 @@ func (pd plinkoDefinition) CreateState(state State) StateDefinition {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}
 
+	pd.abs.States = append(pd.abs.States, state)
+
 	sd := stateDefinition{
 		State:    state,
 		Triggers: make(map[Trigger]*TriggerDefinition),
+		abs:      &pd.abs,
 	}
 
 	(*pd.States)[state] = &sd
@@ -43,11 +80,15 @@ func (pd plinkoDefinition) CreateState(state State) StateDefinition {
 	return sd
 }
 
+type compileInfo struct {
+}
+
 type StateDefinition interface {
 	//State() string
 	OnEntry(entryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition
 	OnExit(exitFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition
 	Permit(triggerName Trigger, destinationState State, sideEffect SideEffect) StateDefinition
+	//TBD: AllowReentrance
 }
 
 type TriggerDefinition struct {
@@ -62,6 +103,8 @@ type stateDefinition struct {
 
 	OnEntryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)
 	OnExitFn  func(pp *PlinkoPayload) (*PlinkoPayload, error)
+
+	abs *abstractSyntax
 }
 
 type PlinkDataStructure struct {
@@ -91,5 +134,20 @@ func (sd stateDefinition) Permit(triggerName Trigger, destinationState State, si
 	}
 	sd.Triggers[triggerName] = &td
 
+	sd.abs.TriggerDefinitions = append(sd.abs.TriggerDefinitions, td)
+
 	return sd
 }
+
+type CompilerMessage struct {
+	CompileMessage CompilerReportType
+	Message        string
+}
+
+type CompilerReportType string
+
+const (
+	CompileError   CompilerReportType = "Compile Error"
+	CompileWarning CompilerReportType = "Compile Warning"
+	// CompileInfo CompilerReportType "Compile Info"
+)

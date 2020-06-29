@@ -86,6 +86,15 @@ func TestEntryAndExitFunctions(t *testing.T) {
 	stateDef = ps.(stateDefinition)
 	assert.NotNil(t, stateDef.OnExitFn)
 	assert.NotNil(t, stateDef.OnEntryFn)
+}
+
+func TestCompile(t *testing.T) {
+	p := CreateDefinition()
+
+	p.CreateState(NewOrder).
+		Permit("Submit", "PublishedOrder", "OnPublish")
+
+	assert.Equal(t, 1, len(p.Compile()))
 
 }
 
