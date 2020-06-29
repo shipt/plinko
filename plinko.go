@@ -46,6 +46,7 @@ func (pd plinkoDefinition) CreateState(state State) StateDefinition {
 type StateDefinition interface {
 	//State() string
 	OnEntry(entryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition
+	OnExit(exitFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition
 	Permit(triggerName Trigger, destinationState State, sideEffect SideEffect) StateDefinition
 }
 
@@ -60,6 +61,7 @@ type stateDefinition struct {
 	Triggers map[Trigger]*TriggerDefinition
 
 	OnEntryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)
+	OnExitFn  func(pp *PlinkoPayload) (*PlinkoPayload, error)
 }
 
 type PlinkDataStructure struct {
@@ -68,6 +70,12 @@ type PlinkDataStructure struct {
 
 func (sd stateDefinition) OnEntry(entryFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition {
 	sd.OnEntryFn = entryFn
+
+	return sd
+}
+
+func (sd stateDefinition) OnExit(exitFn func(pp *PlinkoPayload) (*PlinkoPayload, error)) StateDefinition {
+	sd.OnExitFn = exitFn
 
 	return sd
 }

@@ -1,6 +1,7 @@
 package plinko
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -64,6 +65,28 @@ func TestPlinkoAsInterface(t *testing.T) {
 	p.CreateState("NewOrder").
 		Permit("Submit", "PublishedOrder", "OnPublish").
 		Permit("Review", "ReviewedOrder", "OnReview")
+}
+
+func TestEntryAndExitFunctions(t *testing.T) {
+	p := CreateDefinition()
+	ps := p.CreateState(NewOrder)
+
+	stateDef := ps.(stateDefinition)
+	assert.Nil(t, stateDef.OnExitFn)
+	assert.Nil(t, stateDef.OnEntryFn)
+
+	ps = ps.OnEntry(func(pp *PlinkoPayload) (*PlinkoPayload, error) {
+		return nil, fmt.Errorf("misc error")
+	})
+
+	ps = ps.OnExit(func(pp *PlinkoPayload) (*PlinkoPayload, error) {
+		return nil, fmt.Errorf("misc error")
+	})
+
+	stateDef = ps.(stateDefinition)
+	assert.NotNil(t, stateDef.OnExitFn)
+	assert.NotNil(t, stateDef.OnEntryFn)
+
 }
 
 const (
