@@ -5,6 +5,7 @@ import "fmt"
 type State string
 type Trigger string
 type SideEffect string
+type Uml string
 
 func CreateDefinition() PlinkoDefinition {
 	stateMap := make(map[State]*stateDefinition)
@@ -29,7 +30,7 @@ type PlinkoPayload interface {
 type PlinkoDefinition interface {
 	CreateState(state State) StateDefinition
 	Compile() []CompilerMessage
-	//RenderPlantUml()
+	RenderUml() (Uml, error)
 }
 
 type plinkoDefinition struct {
@@ -45,6 +46,31 @@ func findDestinationState(states []State, searchState State) bool {
 	}
 
 	return false
+}
+
+func (pd plinkoDefinition) RenderUml() (Uml, error) {
+	cm := pd.Compile()
+
+	for _, def := range cm {
+		if def.CompileMessage == CompileError {
+			return "", fmt.Errorf("critical errors exist in definition")
+		}
+	}
+
+	var uml Uml
+	uml = "@startuml\n"
+	uml += Uml(fmt.Sprintf("[*] -> %s \n", pd.abs.StateDefinitions[0].State))
+
+	for _, sd := range pd.abs.StateDefinitions {
+		fmt.Printf("sd: %+v \n", sd)
+
+		for _, td := range sd.Triggers {
+			uml += Uml(fmt.Sprintf("%s --> %s : %s\n", sd.State, td.DestinationState, td.Name))
+		}
+	}
+
+	uml += "@enduml"
+	return uml, nil
 }
 
 func (pd plinkoDefinition) Compile() []CompilerMessage {
@@ -87,6 +113,8 @@ func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
 
 	pd.abs.States = append(pd.abs.States, state)
 	pd.abs.StateDefinitions = append(pd.abs.StateDefinitions, &sd)
+
+	fmt.Printf("data: %+v\n", sd)
 
 	return sd
 }

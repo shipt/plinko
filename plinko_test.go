@@ -109,6 +109,30 @@ func TestTriggerlessStateCompile(t *testing.T) {
 
 }
 
+func TestUmlDiagramming(t *testing.T) {
+	p := CreateDefinition()
+
+	p.CreateState(NewOrder).
+		Permit("Submit", "PublishedOrder", "OnPublish").
+		Permit("Review", "UnderReview", "OnReview")
+
+	p.CreateState("PublishedOrder")
+
+	p.CreateState("UnderReview").
+		Permit("CompleteReview", "PublishedOrder", "OnCompletedReview").
+		Permit("RejectOrder", "RejectedOrder", "OnRejectOrder")
+
+	p.CreateState("RejectedOrder")
+
+	uml, err := p.RenderUml()
+
+	fmt.Println(uml)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "@startuml\n[*] -> NewOrder \nNewOrder", string(uml)[0:35])
+	assert.Equal(t, "\n@enduml", string(uml)[len(uml)-8:])
+}
+
 const (
 	NewOrder State = "NewOrder"
 	Reviewed State = "Reviewed"
