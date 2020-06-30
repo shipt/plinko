@@ -27,37 +27,38 @@ The state machine can provide a list of triggers for a given state to provide si
 A state machine is created by articulating the states,  the triggers that can be used at each state and the destination state where they land.  Below, a state machine is created describing a set of states an order can progress through along with the triggers that can be used.
 
 ```golang
-	p := plinko.CreateDefinition()
+p := plinko.CreateDefinition()
 
-	p.CreateState(Created).
-		OnEntry(OnNewOrderEntry).
-		Permit(Open, Opened).
-		Permit(Cancel, Canceled)
+p.CreateState(Created).
+	OnEntry(OnNewOrderEntry).
+	Permit(Open, Opened).
+	Permit(Cancel, Canceled)
 
-	p.CreateState(Opened).
-		Permit(AddItemToOrder, Opened).
-		Permit(Claim, Claimed).
-		Permit(Cancel, Canceled)
+p.CreateState(Opened).
+	Permit(AddItemToOrder, Opened).
+	Permit(Claim, Claimed).
+	Permit(Cancel, Canceled)
 
-	p.CreateState(Claimed).
-		Permit(AddItemToOrder, Claimed).
-		Permit(Submit, ArriveAtStore).
-		Permit(Cancel, Canceled)
+p.CreateState(Claimed).
+	Permit(AddItemToOrder, Claimed).
+	Permit(Submit, ArriveAtStore).
+	Permit(Cancel, Canceled)
 
-	p.CreateState(ArriveAtStore).
-		Permit(Submit, MarkedAsPickedUp).
-		Permit(Cancel, Canceled)
+p.CreateState(ArriveAtStore).
+	Permit(Submit, MarkedAsPickedUp).
+	Permit(Cancel, Canceled)
 
-	p.CreateState(MarkedAsPickedUp).
-		Permit(Deliver, Delivered).
-		Permit(Cancel, Canceled)
+p.CreateState(MarkedAsPickedUp).
+	Permit(Deliver, Delivered).
+	Permit(Cancel, Canceled)
 
-	p.CreateState(Delivered).
-		Permit(Return, Returned)
+p.CreateState(Delivered).
+	Permit(Return, Returned)
 
-	p.CreateState(Canceled).
-		Permit(Reinstate, Created)
-	p.CreateState(Returned)
+p.CreateState(Canceled).
+	Permit(Reinstate, Created)
+	
+p.CreateState(Returned)
 ```
 
 Once created, the next step is compiling the state machine.  This means the state machine is validated for complete-ness.  At this stage, Errors and Warnings are raised.  This incidentally allows the state machine definition to be fully testable in the build pipeline before deployment.
