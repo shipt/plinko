@@ -178,6 +178,7 @@ func TestJonathanDiagramming(t *testing.T) {
 	p := CreateDefinition()
 
 	p.CreateState(Created).
+		OnEntry(OnNewOrderEntry).
 		Permit(Open, Opened).
 		Permit(Cancel, Canceled)
 
