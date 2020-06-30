@@ -8,13 +8,18 @@ type State string
 type Trigger string
 type Uml string
 
+type callbackDefinitions struct {
+	OnEntryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)
+	OnExitFn  func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)
+}
+
 type PlinkoCompilerOutput struct {
 	PlinkoStateMachine PlinkoStateMachine
 	Messages           []CompilerMessage
 }
 
 type PlinkoStateMachine interface {
-	Fire(payload *PlinkoPayload, trigger Trigger) (*PlinkoPayload, error)
+	Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error)
 }
 
 type plinkoStateMachine struct {
@@ -45,8 +50,8 @@ func (td transitionDef) GetTrigger() Trigger {
 	return td.trigger
 }
 
-func (psm plinkoStateMachine) Fire(payload *PlinkoPayload, trigger Trigger) (*PlinkoPayload, error) {
-	state := (*payload).GetState()
+func (psm plinkoStateMachine) Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error) {
+	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
 
 	if sd2 == nil {
@@ -66,12 +71,12 @@ func (psm plinkoStateMachine) Fire(payload *PlinkoPayload, trigger Trigger) (*Pl
 		trigger:     trigger,
 	}
 
-	if sd2.OnExitFn != nil {
-		sd2.OnExitFn(payload, td)
+	if sd2.callbacks.OnExitFn != nil {
+		sd2.callbacks.OnExitFn(payload, td)
 	}
 
-	if destinationState.OnEntryFn != nil {
-		destinationState.OnEntryFn(payload, td)
+	if destinationState.callbacks.OnEntryFn != nil {
+		destinationState.callbacks.OnEntryFn(payload, td)
 	}
 
 	return payload, nil
@@ -182,10 +187,13 @@ func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}
 
+	cbd := callbackDefinitions{}
+
 	sd := stateDefinition{
-		State:    state,
-		Triggers: make(map[Trigger]*TriggerDefinition),
-		abs:      &pd.abs,
+		State:     state,
+		Triggers:  make(map[Trigger]*TriggerDefinition),
+		abs:       &pd.abs,
+		callbacks: &cbd,
 	}
 
 	(*pd.States)[state] = &sd
@@ -201,8 +209,8 @@ type compileInfo struct {
 
 type StateDefinition interface {
 	//State() string
-	OnEntry(entryFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition
-	OnExit(exitFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition
+	OnEntry(entryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition
+	OnExit(exitFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition
 	Permit(triggerName Trigger, destinationState State) StateDefinition
 	//TBD: AllowReentrance
 }
@@ -216,8 +224,7 @@ type stateDefinition struct {
 	State    State
 	Triggers map[Trigger]*TriggerDefinition
 
-	OnEntryFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)
-	OnExitFn  func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)
+	callbacks *callbackDefinitions
 
 	abs *abstractSyntax
 }
@@ -226,14 +233,14 @@ type PlinkoDataStructure struct {
 	States map[State]StateDefinition
 }
 
-func (sd stateDefinition) OnEntry(entryFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition {
-	sd.OnEntryFn = entryFn
+func (sd stateDefinition) OnEntry(entryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition {
+	sd.callbacks.OnEntryFn = entryFn
 
 	return sd
 }
 
-func (sd stateDefinition) OnExit(exitFn func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error)) StateDefinition {
-	sd.OnExitFn = exitFn
+func (sd stateDefinition) OnExit(exitFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition {
+	sd.callbacks.OnExitFn = exitFn
 
 	return sd
 }

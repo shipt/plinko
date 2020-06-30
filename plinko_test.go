@@ -67,20 +67,20 @@ func TestEntryAndExitFunctions(t *testing.T) {
 	ps := p.CreateState(NewOrder)
 
 	stateDef := ps.(stateDefinition)
-	assert.Nil(t, stateDef.OnExitFn)
-	assert.Nil(t, stateDef.OnEntryFn)
+	assert.Nil(t, stateDef.callbacks.OnExitFn)
+	assert.Nil(t, stateDef.callbacks.OnEntryFn)
 
-	ps = ps.OnEntry(func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error) {
+	ps = ps.OnEntry(func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error) {
 		return nil, fmt.Errorf("misc error")
 	})
 
-	ps = ps.OnExit(func(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error) {
+	ps = ps.OnExit(func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error) {
 		return nil, fmt.Errorf("misc error")
 	})
 
 	stateDef = ps.(stateDefinition)
-	assert.NotNil(t, stateDef.OnExitFn)
-	assert.NotNil(t, stateDef.OnEntryFn)
+	assert.NotNil(t, stateDef.callbacks.OnExitFn)
+	assert.NotNil(t, stateDef.callbacks.OnEntryFn)
 }
 
 func TestUndefinedStateCompile(t *testing.T) {
@@ -132,14 +132,29 @@ func TestUmlDiagramming(t *testing.T) {
 	assert.Equal(t, "\n@enduml", string(uml)[len(uml)-8:])
 }
 
+type testPayload struct {
+	state State
+}
+
+func (p testPayload) GetState() State {
+	return p.state
+}
+
+func (p testPayload) PutState(state State) {
+	p.state = state
+}
+
 func TestStateMachine(t *testing.T) {
 	p := CreateDefinition()
 
 	p.CreateState(NewOrder).
+		OnEntry(OnNewOrderEntry).
 		Permit("Submit", "PublishedOrder").
 		Permit("Review", "UnderReview")
 
-	p.CreateState("PublishedOrder")
+	p.CreateState("PublishedOrder").
+		OnEntry(OnNewOrderEntry).
+		Permit("Submit", NewOrder)
 
 	p.CreateState("UnderReview").
 		Permit("CompleteReview", "PublishedOrder").
@@ -147,13 +162,13 @@ func TestStateMachine(t *testing.T) {
 
 	p.CreateState("RejectedOrder")
 
-	uml, err := p.RenderUml()
+	compilerOutput := p.Compile()
+	psm := compilerOutput.PlinkoStateMachine
 
-	fmt.Println(uml)
+	payload := testPayload{state: NewOrder}
 
-	assert.Nil(t, err)
-	assert.Equal(t, "@startuml\n[*] -> NewOrder \nNewOrder", string(uml)[0:35])
-	assert.Equal(t, "\n@enduml", string(uml)[len(uml)-8:])
+	psm.Fire(payload, "Submit")
+
 }
 
 const (
@@ -165,36 +180,7 @@ func IsPlatform(pp PlinkoPayload) bool {
 	return true
 }
 
-func OnNewOrderEntry(pp *PlinkoPayload, transitionInfo TransitionInfo) (*PlinkoPayload, error) {
+func OnNewOrderEntry(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error) {
+	fmt.Printf("onentry: %+v", transitionInfo)
 	return pp, nil
-}
-
-func TestPlinkoRunner(t *testing.T) {
-
-	pd := CreateDefinition()
-
-	pd.CreateState("NewOrder").
-		OnEntry(OnNewOrderEntry).
-		Permit("Submit", "PublishedOrder").
-		Permit("Review", "ReviewedOrder")
-
-	/* plinkoDefinition := Plinko.CreateDefinition()
-
-	plinkoDefinition.
-		State("foo").
-		PermitIf("trigger", "state", func() { return state.IsValidNumber() }).
-		PermitIf("trigger", "state2", func() { return !state.IsValidNumber() }).
-		PermitReentry("trigger")
-
-
-
-	plinko, compilerOutput, err := Plinko.Compile(plinkoDefinition)
-
-
-	plinko.GetTriggers(state)
-	plinko.Fire(state, "Submit", item )
-
-
-	*/
-
 }
