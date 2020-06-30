@@ -5,7 +5,7 @@ The project, as well as the example above was inspired by Simple State Machine a
 ## Why Stateless
 Most state machine implementations keep track of an in-memory state during the running of an application. This makes sense for desktop applications or games where the journey of that state is critical to the user-facing process, but that doesn't map well to a service that is shepherding things like Orders and Products that number in the thousands-to-millions on any given day.
 
-Stateless State Machines are simply the extraction of the state from the mechanics of transition states.  This allows the state machine to be reduced to a simple data structure, and enables the cost of wiring up the machine to happen only once.  In turn,  the state machine can shared across multiple threads and executed concurrently without interference between discrete runs.
+Stateless State Machines are simply the extraction of the state from the mechanics of state transition.  This allows the state machine to be reduced to a simple data structure, and enables the cost of wiring up the machine to happen only once.  In turn, the state machine can shared across multiple threads and executed concurrently without interference between discrete runs.
 
 There are a number of good articles on this front, there are a couple that focus on state design from the [esoteric around soundness of the design](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State) to the more [functional programming based definition of a state machine](https://hexdocs.pm/as_fsm/readme.html).
 
@@ -78,7 +78,6 @@ Once we have the state machine, we can pass that around explicitly or through th
 We can trigger the state processes by creating a PlinkoPayload and handing it to the statemachine like so:
 
 ```golang
-
 payload := appPayload{ /* ... */ }
 fsm.Fire(appPayload, Submit)
 ```
