@@ -70,7 +70,7 @@ if co.error {
     // exit
 }
 
-fsm = co.StateMachine
+fsm := co.StateMachine
 ```
 
 Once we have the state machine, we can pass that around explicitly or through things like controller context to make it available where needed.
