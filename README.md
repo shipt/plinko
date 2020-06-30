@@ -3,7 +3,7 @@
 The project, as well as the example above was inspired by Simple State Machine and the Erlang Stateless State Machine Implementations.
 
 ## Why Stateless
-Most state machine implementations keep track of an in-memory state during the running of an applications. This makes sense for desktop applications or games where the journey of that state is critical to the user-facing process, but that doesn't map well to a service that is shepherding things like Orders and Products that number in the thousands-to-millions on any given day.
+Most state machine implementations keep track of an in-memory state during the running of an application. This makes sense for desktop applications or games where the journey of that state is critical to the user-facing process, but that doesn't map well to a service that is shepherding things like Orders and Products that number in the thousands-to-millions on any given day.
 
 Stateless State Machines are simply the extraction of the state from the mechanics of transition states.  This allows the state machine to be reduced to a simple data structure, and enables the cost of wiring up the machine to happen only once.  In turn,  the state machine can shared across multiple threads and executed concurrently without interference between discrete runs.
 
