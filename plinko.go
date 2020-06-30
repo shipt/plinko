@@ -2,16 +2,13 @@ package plinko
 
 import (
 	"fmt"
+	"github.com/shipt/plinko/types"
+
+	definitions "github.com/shipt/plinko/definitions"
+	"github.com/shipt/plinko/interfaces"
 )
 
-type State string
-type Trigger string
 type Uml string
-
-type callbackDefinitions struct {
-	OnEntryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)
-	OnExitFn  func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)
-}
 
 type PlinkoCompilerOutput struct {
 	PlinkoStateMachine PlinkoStateMachine
@@ -19,7 +16,8 @@ type PlinkoCompilerOutput struct {
 }
 
 type PlinkoStateMachine interface {
-	Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error)
+	Fire(payload interfaces.PlinkoPayload, trigger types.Trigger) (interfaces.PlinkoPayload, error)
+	//GetValidTriggers(payload interfaces.PlinkoPayload) ([]types.Trigger, error)
 }
 
 type plinkoStateMachine struct {
@@ -27,30 +25,30 @@ type plinkoStateMachine struct {
 }
 
 type TransitionInfo interface {
-	GetSource() State
-	GetDestination() State
-	GetTrigger() Trigger
+	GetSource() types.State
+	GetDestination() types.State
+	GetTrigger() types.Trigger
 }
 
 type transitionDef struct {
-	source      State
-	destination State
-	trigger     Trigger
+	source      types.State
+	destination types.State
+	trigger     types.Trigger
 }
 
-func (td transitionDef) GetSource() State {
+func (td transitionDef) GetSource() types.State {
 	return td.source
 }
 
-func (td transitionDef) GetDestination() State {
+func (td transitionDef) GetDestination() types.State {
 	return td.destination
 }
 
-func (td transitionDef) GetTrigger() Trigger {
+func (td transitionDef) GetTrigger() types.Trigger {
 	return td.trigger
 }
 
-func (psm plinkoStateMachine) Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error) {
+func (psm plinkoStateMachine) Fire(payload interfaces.PlinkoPayload, trigger types.Trigger) (interfaces.PlinkoPayload, error) {
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
 
@@ -83,7 +81,7 @@ func (psm plinkoStateMachine) Fire(payload PlinkoPayload, trigger Trigger) (Plin
 }
 
 func CreateDefinition() PlinkoDefinition {
-	stateMap := make(map[State]*stateDefinition)
+	stateMap := make(map[types.State]*stateDefinition)
 	plinko := plinkoDefinition{
 		States: &stateMap,
 	}
@@ -94,27 +92,23 @@ func CreateDefinition() PlinkoDefinition {
 }
 
 type abstractSyntax struct {
-	States             []State
+	States             []types.State
 	TriggerDefinitions []TriggerDefinition
 	StateDefinitions   []*stateDefinition
 }
 
-type PlinkoPayload interface {
-	GetState() State
-}
-
 type PlinkoDefinition interface {
-	CreateState(state State) StateDefinition
+	CreateState(state types.State) StateDefinition
 	Compile() PlinkoCompilerOutput
 	RenderUml() (Uml, error)
 }
 
 type plinkoDefinition struct {
-	States *map[State]*stateDefinition
+	States *map[types.State]*stateDefinition
 	abs    abstractSyntax
 }
 
-func findDestinationState(states []State, searchState State) bool {
+func findDestinationState(states []types.State, searchState types.State) bool {
 	for _, searchVal := range states {
 		if searchVal == searchState {
 			return true
@@ -182,16 +176,15 @@ func (pd plinkoDefinition) Compile() PlinkoCompilerOutput {
 	return co
 }
 
-func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
+func (pd *plinkoDefinition) CreateState(state types.State) StateDefinition {
 	if _, ok := (*pd.States)[state]; ok {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}
 
-	cbd := callbackDefinitions{}
-
+	cbd := definitions.CallbackDefinitions{}
 	sd := stateDefinition{
 		State:     state,
-		Triggers:  make(map[Trigger]*TriggerDefinition),
+		Triggers:  make(map[types.Trigger]*TriggerDefinition),
 		abs:       &pd.abs,
 		callbacks: &cbd,
 	}
@@ -209,43 +202,43 @@ type compileInfo struct {
 
 type StateDefinition interface {
 	//State() string
-	OnEntry(entryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition
-	OnExit(exitFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition
-	Permit(triggerName Trigger, destinationState State) StateDefinition
+	OnEntry(entryFn func(pp interfaces.PlinkoPayload, transitionInfo definitions.TransitionInfo) (interfaces.PlinkoPayload, error)) StateDefinition
+	OnExit(exitFn func(pp interfaces.PlinkoPayload, transitionInfo definitions.TransitionInfo) (interfaces.PlinkoPayload, error)) StateDefinition
+	Permit(triggerName types.Trigger, destinationState types.State) StateDefinition
 	//TBD: AllowReentrance
 }
 
 type TriggerDefinition struct {
-	Name             Trigger
-	DestinationState State
+	Name             types.Trigger
+	DestinationState types.State
 }
 
 type stateDefinition struct {
-	State    State
-	Triggers map[Trigger]*TriggerDefinition
+	State    types.State
+	Triggers map[types.Trigger]*TriggerDefinition
 
-	callbacks *callbackDefinitions
+	callbacks *definitions.CallbackDefinitions
 
 	abs *abstractSyntax
 }
 
 type PlinkoDataStructure struct {
-	States map[State]StateDefinition
+	States map[types.State]StateDefinition
 }
 
-func (sd stateDefinition) OnEntry(entryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition {
+func (sd stateDefinition) OnEntry(entryFn func(pp interfaces.PlinkoPayload, transitionInfo definitions.TransitionInfo) (interfaces.PlinkoPayload, error)) StateDefinition {
 	sd.callbacks.OnEntryFn = entryFn
 
 	return sd
 }
 
-func (sd stateDefinition) OnExit(exitFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition {
+func (sd stateDefinition) OnExit(exitFn func(pp interfaces.PlinkoPayload, transitionInfo definitions.TransitionInfo) (interfaces.PlinkoPayload, error)) StateDefinition {
 	sd.callbacks.OnExitFn = exitFn
 
 	return sd
 }
 
-func (sd stateDefinition) Permit(triggerName Trigger, destinationState State) StateDefinition {
+func (sd stateDefinition) Permit(triggerName types.Trigger, destinationState types.State) StateDefinition {
 	if _, ok := sd.Triggers[triggerName]; ok {
 		panic(fmt.Sprintf("Trigger: %s - has already been defined, plinko configuration invalid.", triggerName))
 	}
