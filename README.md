@@ -1,4 +1,4 @@
-# Plinko - aStateless State Machine for Go
+# Plinko - a Stateless State Machine for Go
 
 The project, as well as the example above was inspired by Simple State Machine and the Erlang Stateless State Machine Implementations.
 
