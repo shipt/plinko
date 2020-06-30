@@ -18,7 +18,7 @@ Some useful extensions are also provided:
 
 * Pushes state external to the structure - instantiate once, use many times.
 * Reentrant states
-* Export to dot graph and PlantUML
+* Export to PlantUML
 
 # Introspection
 The state machine can provide a list of triggers for a given state to provide simple access to the list of triggers for any state.
