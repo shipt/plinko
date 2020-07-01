@@ -4,16 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/shipt/plinko/definitions"
-	"github.com/shipt/plinko/interfaces"
-	"github.com/shipt/plinko/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStateDefinition(t *testing.T) {
 	state := stateDefinition{
 		State:    "NewOrder",
-		Triggers: make(map[types.Trigger]*TriggerDefinition),
+		Triggers: make(map[Trigger]*TriggerDefinition),
 	}
 
 	assert.Panics(t, func() {
@@ -24,13 +21,13 @@ func TestStateDefinition(t *testing.T) {
 
 	state = stateDefinition{
 		State:    "NewOrder",
-		Triggers: make(map[types.Trigger]*TriggerDefinition),
+		Triggers: make(map[Trigger]*TriggerDefinition),
 	}
 
 }
 
 func TestPlinkoDefinition(t *testing.T) {
-	stateMap := make(map[types.State]*stateDefinition)
+	stateMap := make(map[State]*stateDefinition)
 	plinko := plinkoDefinition{
 		States: &stateMap,
 	}
@@ -73,11 +70,11 @@ func TestEntryAndExitFunctions(t *testing.T) {
 	assert.Nil(t, stateDef.callbacks.OnExitFn)
 	assert.Nil(t, stateDef.callbacks.OnEntryFn)
 
-	ps = ps.OnEntry(func(pp interfaces.PlinkoPayload, transitionInfo definitions.TransitionInfo) (interfaces.PlinkoPayload, error) {
+	ps = ps.OnEntry(func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error) {
 		return nil, fmt.Errorf("misc error")
 	})
 
-	ps = ps.OnExit(func(pp interfaces.PlinkoPayload, transitionInfo definitions.TransitionInfo) (interfaces.PlinkoPayload, error) {
+	ps = ps.OnExit(func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error) {
 		return nil, fmt.Errorf("misc error")
 	})
 
@@ -136,14 +133,14 @@ func TestUmlDiagramming(t *testing.T) {
 }
 
 type testPayload struct {
-	state types.State
+	state State
 }
 
-func (p testPayload) GetState() types.State {
+func (p testPayload) GetState() State {
 	return p.state
 }
 
-func (p testPayload) PutState(state types.State) {
+func (p testPayload) PutState(state State) {
 	p.state = state
 }
 
@@ -205,6 +202,7 @@ func TestJonathanDiagramming(t *testing.T) {
 
 	p.CreateState(Canceled).
 		Permit(Reinstate, Created)
+
 	p.CreateState(Returned)
 
 	co := p.Compile()
@@ -218,32 +216,32 @@ func TestJonathanDiagramming(t *testing.T) {
 }
 
 const (
-	NewOrder types.State = "NewOrder"
-	Reviewed types.State = "Reviewed"
+	NewOrder State = "NewOrder"
+	Reviewed State = "Reviewed"
 )
 
-func IsPlatform(pp interfaces.PlinkoPayload) bool {
+func IsPlatform(pp PlinkoPayload) bool {
 	return true
 }
 
-func OnNewOrderEntry(pp interfaces.PlinkoPayload, transitionInfo definitions.TransitionInfo) (interfaces.PlinkoPayload, error) {
+func OnNewOrderEntry(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error) {
 	fmt.Printf("onentry: %+v", transitionInfo)
 	return pp, nil
 }
 
-const Created types.State = "Created"
-const Opened types.State = "Opened"
-const Claimed types.State = "Claimed"
-const ArriveAtStore types.State = "ArrivedAtStore"
-const MarkedAsPickedUp types.State = "MarkedAsPickedup"
-const Delivered types.State = "Delivered"
-const Canceled types.State = "Canceled"
-const Returned types.State = "Returned"
+const Created State = "Created"
+const Opened State = "Opened"
+const Claimed State = "Claimed"
+const ArriveAtStore State = "ArrivedAtStore"
+const MarkedAsPickedUp State = "MarkedAsPickedup"
+const Delivered State = "Delivered"
+const Canceled State = "Canceled"
+const Returned State = "Returned"
 
-const Submit types.Trigger = "Submit"
-const Cancel types.Trigger = "Cancel"
-const Open types.Trigger = "Open"
-const Claim types.Trigger = "Claim"
-const Deliver types.Trigger = "Deliver"
-const Return types.Trigger = "Return"
-const Reinstate types.Trigger = "Reinstate"
+const Submit Trigger = "Submit"
+const Cancel Trigger = "Cancel"
+const Open Trigger = "Open"
+const Claim Trigger = "Claim"
+const Deliver Trigger = "Deliver"
+const Return Trigger = "Return"
+const Reinstate Trigger = "Reinstate"
