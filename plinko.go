@@ -223,16 +223,3 @@ func (sd stateDefinition) Permit(triggerName Trigger, destinationState State) St
 
 	return sd
 }
-
-type CompilerMessage struct {
-	CompileMessage CompilerReportType
-	Message        string
-}
-
-type CompilerReportType string
-
-const (
-	CompileError   CompilerReportType = "Compile Error"
-	CompileWarning CompilerReportType = "Compile Warning"
-	// CompileInfo CompilerReportType "Compile Info"
-)
