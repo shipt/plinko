@@ -29,7 +29,7 @@ type StateDefinition interface {
 	OnEntry(entryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition
 	OnExit(exitFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition
 	Permit(triggerName Trigger, destinationState State) StateDefinition
-	//TBD: AllowReentrance
+	//TBD: AllowReentrance by request, not default
 }
 
 type PlinkoPayload interface {
