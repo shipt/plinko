@@ -1,6 +1,6 @@
 # Plinko - a Stateless State Machine for Go
 
-The project, as well as the example below, are inspired by the Erlang stateless State Machine and Stateless project implementations.  The goal is to create the fastest state machine that can be reused across many entities with the least amount of overhead in the process.
+The project, as well as the example below, are inspired by the [Erlang stateless State Machine](https://erlang.org/doc/design_principles/statem.html) and [Stateless project](https://github.com/dotnet-state-machine/stateless) implementations along with the [Tinder State Machine](https://github.com/Tinder/StateMachine).  The goal is to create the fastest state machine that can be reused across many entities with the least amount of overhead in the process.
 
 ## Why Stateless
 Most state machine implementations keep track of an in-memory state during the running of an application. This makes sense for desktop applications or games where the journey of that state is critical to the user-facing process, but that doesn't map well to a service that is shepherding things like Orders and Products that number in the thousands-to-millions on any given day.
