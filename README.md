@@ -29,9 +29,30 @@ Some useful extensions are also provided:
 The state machine can provide a list of triggers for a given state to provide simple access to the list of triggers for any state.
 
 ## Creating a state machine
-A state machine is created by articulating the states,  the triggers that can be used at each state and the destination state where they land.  Below, a state machine is created describing a set of states an order can progress through along with the triggers that can be used.
+A state machine is created by articulating the states,  the triggers that can be used at each state and the destination state where they land. Here is a sample declaration of the states and triggers we will use:
 
-```golang
+```go
+const Created          State = "Created"
+const Opened           State = "Opened"
+const Claimed          State = "Claimed"
+const ArriveAtStore    State = "ArrivedAtStore"
+const MarkedAsPickedUp State = "MarkedAsPickedup"
+const Delivered        State = "Delivered"
+const Canceled         State = "Canceled"
+const Returned         State = "Returned"
+
+const Submit    Trigger = "Submit"
+const Cancel    Trigger = "Cancel"
+const Open      Trigger = "Open"
+const Claim     Trigger = "Claim"
+const Deliver   Trigger = "Deliver"
+const Return    Trigger  = "Return"
+const Reinstate Trigger = "Reinstate"
+```
+
+ Below, a state machine is created describing a set of states an order can progress through along with the triggers that can be used.
+
+```go
 p := plinko.CreateDefinition()
 
 p.Configure(Created).
@@ -68,7 +89,7 @@ p.Configure(Returned)
 
 Once created, the next step is compiling the state machine.  This means the state machine is validated for complete-ness.  At this stage, Errors and Warnings are raised.  This incidentally allows the state machine definition to be fully testable in the build pipeline before deployment.
 
-```golang
+```go
 co := p.Compile()
 
 if co.error {
@@ -82,7 +103,7 @@ Once we have the state machine, we can pass that around explicitly or through th
 
 We can trigger the state processes by creating a PlinkoPayload and handing it to the statemachine like so:
 
-```golang
+```go
 payload := appPayload{ /* ... */ }
 fsm.Fire(appPayload, Submit)
 ```
@@ -90,7 +111,7 @@ fsm.Fire(appPayload, Submit)
 ## State Machine documentation
 The fsm can document itself upon a successful compile - emitting PlantUML which can, in turn, be rendered into a state diagram:
 
-```golang
+```go
 uml, err := p.RenderUml()
 
 if err != nil {
