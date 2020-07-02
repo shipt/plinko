@@ -155,7 +155,7 @@ func (pd plinkoDefinition) Compile() PlinkoCompilerOutput {
 	return co
 }
 
-func (pd *plinkoDefinition) CreateState(state State) StateDefinition {
+func (pd *plinkoDefinition) Configure(state State) StateDefinition {
 	if _, ok := (*pd.States)[state]; ok {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}

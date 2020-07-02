@@ -34,36 +34,36 @@ A state machine is created by articulating the states,  the triggers that can be
 ```golang
 p := plinko.CreateDefinition()
 
-p.CreateState(Created).
+p.Configure(Created).
 	OnEntry(OnNewOrderEntry).
 	Permit(Open, Opened).
 	Permit(Cancel, Canceled)
 
-p.CreateState(Opened).
+p.Configure(Opened).
 	Permit(AddItemToOrder, Opened).
 	Permit(Claim, Claimed).
 	Permit(Cancel, Canceled)
 
-p.CreateState(Claimed).
+p.Configure(Claimed).
 	Permit(AddItemToOrder, Claimed).
 	Permit(Submit, ArriveAtStore).
 	Permit(Cancel, Canceled)
 
-p.CreateState(ArriveAtStore).
+p.Configure(ArriveAtStore).
 	Permit(Submit, MarkedAsPickedUp).
 	Permit(Cancel, Canceled)
 
-p.CreateState(MarkedAsPickedUp).
+p.Configure(MarkedAsPickedUp).
 	Permit(Deliver, Delivered).
 	Permit(Cancel, Canceled)
 
-p.CreateState(Delivered).
+p.Configure(Delivered).
 	Permit(Return, Returned)
 
-p.CreateState(Canceled).
+p.Configure(Canceled).
 	Permit(Reinstate, Created)
 	
-p.CreateState(Returned)
+p.Configure(Returned)
 ```
 
 Once created, the next step is compiling the state machine.  This means the state machine is validated for complete-ness.  At this stage, Errors and Warnings are raised.  This incidentally allows the state machine definition to be fully testable in the build pipeline before deployment.

@@ -33,38 +33,38 @@ func TestPlinkoDefinition(t *testing.T) {
 	}
 
 	assert.NotPanics(t, func() {
-		plinko.CreateState("NewOrder").
+		plinko.Configure("NewOrder").
 			//			OnEntry()
 			//			OnExit()
 			Permit("Submit", "PublishedOrder").
 			Permit("Review", "ReviewOrder")
 
-		plinko.CreateState("PublishedOrder")
-		plinko.CreateState("ReviewOrder")
+		plinko.Configure("PublishedOrder")
+		plinko.Configure("ReviewOrder")
 	})
 
 	assert.Panics(t, func() {
-		plinko.CreateState("NewOrder").
+		plinko.Configure("NewOrder").
 			Permit("Submit", "PublishedOrder").
 			Permit("Review", "ReviewOrder")
 
-		plinko.CreateState("PublishedOrder")
-		plinko.CreateState("ReviewOrder")
-		plinko.CreateState("NewOrder")
+		plinko.Configure("PublishedOrder")
+		plinko.Configure("ReviewOrder")
+		plinko.Configure("NewOrder")
 	})
 }
 
 func TestPlinkoAsInterface(t *testing.T) {
 	p := CreateDefinition()
 
-	p.CreateState("NewOrder").
+	p.Configure("NewOrder").
 		Permit("Submit", "PublishedOrder").
 		Permit("Review", "ReviewedOrder")
 }
 
 func TestEntryAndExitFunctions(t *testing.T) {
 	p := CreateDefinition()
-	ps := p.CreateState(NewOrder)
+	ps := p.Configure(NewOrder)
 
 	stateDef := ps.(stateDefinition)
 	assert.Nil(t, stateDef.callbacks.OnExitFn)
@@ -86,7 +86,7 @@ func TestEntryAndExitFunctions(t *testing.T) {
 func TestUndefinedStateCompile(t *testing.T) {
 	p := CreateDefinition()
 
-	p.CreateState(NewOrder).
+	p.Configure(NewOrder).
 		Permit("Submit", "PublishedOrder")
 
 	compilerOutput := p.Compile()
@@ -98,9 +98,9 @@ func TestUndefinedStateCompile(t *testing.T) {
 func TestTriggerlessStateCompile(t *testing.T) {
 	p := CreateDefinition()
 
-	p.CreateState(NewOrder).
+	p.Configure(NewOrder).
 		Permit("Submit", "PublishedOrder")
-	p.CreateState("PublishedOrder")
+	p.Configure("PublishedOrder")
 
 	compilerOutput := p.Compile()
 	assert.Equal(t, 1, len(compilerOutput.Messages))
@@ -111,17 +111,17 @@ func TestTriggerlessStateCompile(t *testing.T) {
 func TestUmlDiagramming(t *testing.T) {
 	p := CreateDefinition()
 
-	p.CreateState(NewOrder).
+	p.Configure(NewOrder).
 		Permit("Submit", "PublishedOrder").
 		Permit("Review", "UnderReview")
 
-	p.CreateState("PublishedOrder")
+	p.Configure("PublishedOrder")
 
-	p.CreateState("UnderReview").
+	p.Configure("UnderReview").
 		Permit("CompleteReview", "PublishedOrder").
 		Permit("RejectOrder", "RejectedOrder")
 
-	p.CreateState("RejectedOrder")
+	p.Configure("RejectedOrder")
 
 	uml, err := p.RenderUml()
 
@@ -147,20 +147,20 @@ func (p testPayload) PutState(state State) {
 func TestStateMachine(t *testing.T) {
 	p := CreateDefinition()
 
-	p.CreateState(NewOrder).
+	p.Configure(NewOrder).
 		OnEntry(OnNewOrderEntry).
 		Permit("Submit", "PublishedOrder").
 		Permit("Review", "UnderReview")
 
-	p.CreateState("PublishedOrder").
+	p.Configure("PublishedOrder").
 		OnEntry(OnNewOrderEntry).
 		Permit("Submit", NewOrder)
 
-	p.CreateState("UnderReview").
+	p.Configure("UnderReview").
 		Permit("CompleteReview", "PublishedOrder").
 		Permit("RejectOrder", "RejectedOrder")
 
-	p.CreateState("RejectedOrder")
+	p.Configure("RejectedOrder")
 
 	compilerOutput := p.Compile()
 	psm := compilerOutput.PlinkoStateMachine
@@ -174,36 +174,36 @@ func TestStateMachine(t *testing.T) {
 func TestJonathanDiagramming(t *testing.T) {
 	p := CreateDefinition()
 
-	p.CreateState(Created).
+	p.Configure(Created).
 		OnEntry(OnNewOrderEntry).
 		Permit(Open, Opened).
 		Permit(Cancel, Canceled)
 
-	p.CreateState(Opened).
+	p.Configure(Opened).
 		Permit("AddItemToOrder", Opened).
 		Permit(Claim, Claimed).
 		Permit(Cancel, Canceled)
 
-	p.CreateState(Claimed).
+	p.Configure(Claimed).
 		Permit("AddItemToOrder", Claimed).
 		Permit(Submit, ArriveAtStore).
 		Permit(Cancel, Canceled)
 
-	p.CreateState(ArriveAtStore).
+	p.Configure(ArriveAtStore).
 		Permit(Submit, MarkedAsPickedUp).
 		Permit(Cancel, Canceled)
 
-	p.CreateState(MarkedAsPickedUp).
+	p.Configure(MarkedAsPickedUp).
 		Permit(Deliver, Delivered).
 		Permit(Cancel, Canceled)
 
-	p.CreateState(Delivered).
+	p.Configure(Delivered).
 		Permit(Return, Returned)
 
-	p.CreateState(Canceled).
+	p.Configure(Canceled).
 		Permit(Reinstate, Created)
 
-	p.CreateState(Returned)
+	p.Configure(Returned)
 
 	co := p.Compile()
 	fmt.Printf("%+v\n", co.Messages)

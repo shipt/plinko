@@ -19,7 +19,7 @@ type TransitionInfo interface {
 }
 
 type PlinkoDefinition interface {
-	CreateState(state State) StateDefinition
+	Configure(state State) StateDefinition
 	Compile() PlinkoCompilerOutput
 	RenderUml() (Uml, error)
 }
