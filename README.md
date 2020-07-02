@@ -9,6 +9,11 @@ Stateless State Machines are simply the extraction of the state from the mechani
 
 There are a number of good articles on this front, there are a couple that focus on state design from the [esoteric around soundness of the design](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State) to the more [functional programming based definition of a state machine](https://hexdocs.pm/as_fsm/readme.html).
 
+## Common implementation pattern in web services
+Many times, a web service may have controllers that span the lifecycle of the entity they are coordinating.  This pattern allows the controller to play the role of traffic cop and defers execution decisions to the state machine.  The state machine introduces two key notions: State and Trigger.  Triggers are mapped to states and execution paths can be different based on sttaes. Applying this to an MVC pattern, the entity contains the state and the state modifying [POST|PUT|PATCH] is the trigger.  For example:
+
+An order can be in different states during it's lifecycle:  Open, Claimed, Delivered, etc.   If someone wishes to cancel that order, there are different protocols and processes involved in each of those states.  In this example a `/cancel/{id}` endpoint is called.  The controller loads the order into a payload and fires the `Cancel` trigger at it using the state machine.  The state machine selects the proper flow and returns the status when complete.
+
 ## Features
 
 * Simple support for states and triggers
