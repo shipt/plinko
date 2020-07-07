@@ -232,7 +232,7 @@ func TestEnumerateTriggers(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-func TestJonathanDiagramming(t *testing.T) {
+func TestDiagramming(t *testing.T) {
 	p := CreateDefinition()
 
 	p.Configure(Created).
