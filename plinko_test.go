@@ -171,6 +171,67 @@ func TestStateMachine(t *testing.T) {
 
 }
 
+func TestCanFire(t *testing.T) {
+	p := CreateDefinition()
+
+	p.Configure(Created).
+		Permit(Open, Opened)
+
+	p.Configure(Opened)
+
+	co := p.Compile()
+
+	psm := co.PlinkoStateMachine
+
+	payload := testPayload{state: Created}
+
+	assert.True(t, psm.CanFire(payload, Open))
+	assert.False(t, psm.CanFire(payload, Deliver))
+}
+
+func findTrigger(triggers []Trigger, trigger Trigger) bool {
+	for _, v := range triggers {
+		if v == trigger {
+			return true
+		}
+	}
+
+	return false
+}
+func TestEnumerateTriggers(t *testing.T) {
+	p := CreateDefinition()
+
+	p.Configure(Created).
+		Permit(Open, Opened).
+		Permit(Cancel, Canceled)
+
+	p.Configure(Opened)
+	p.Configure(Canceled)
+
+	co := p.Compile()
+
+	psm := co.PlinkoStateMachine
+	payload := testPayload{state: Created}
+	triggers, err := psm.EnumerateActiveTriggers(payload)
+
+	assert.Nil(t, err)
+	assert.True(t, findTrigger(triggers, Open))
+	assert.True(t, findTrigger(triggers, Cancel))
+	assert.False(t, findTrigger(triggers, Claim))
+
+	payload = testPayload{state: Opened}
+	triggers, err = psm.EnumerateActiveTriggers(payload)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(triggers))
+
+	// request a state that doesn't exist in the state machine definiton and get an error thrown
+	payload = testPayload{state: Claimed}
+	triggers, err = psm.EnumerateActiveTriggers(payload)
+
+	assert.NotNil(t, err)
+}
+
 func TestJonathanDiagramming(t *testing.T) {
 	p := CreateDefinition()
 

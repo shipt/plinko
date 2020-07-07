@@ -33,6 +33,39 @@ func (td transitionDef) GetTrigger() Trigger {
 	return td.trigger
 }
 
+func (psm plinkoStateMachine) EnumerateActiveTriggers(payload PlinkoPayload) ([]Trigger, error) {
+	state := payload.GetState()
+	sd2 := (*psm.pd.States)[state]
+
+	if sd2 == nil {
+		return nil, fmt.Errorf("State %s not found in state machine definition", state)
+	}
+
+	keys := make([]Trigger, 0, len(sd2.Triggers))
+	for k := range sd2.Triggers {
+		keys = append(keys, k)
+	}
+
+	return keys, nil
+
+}
+
+func (psm plinkoStateMachine) CanFire(payload PlinkoPayload, trigger Trigger) bool {
+	state := payload.GetState()
+	sd2 := (*psm.pd.States)[state]
+
+	if sd2 == nil {
+		return false
+	}
+
+	triggerData := sd2.Triggers[trigger]
+	if triggerData == nil {
+		return false
+	}
+
+	return true
+}
+
 func (psm plinkoStateMachine) Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error) {
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
@@ -42,7 +75,7 @@ func (psm plinkoStateMachine) Fire(payload PlinkoPayload, trigger Trigger) (Plin
 	}
 
 	triggerData := sd2.Triggers[trigger]
-	if sd2 == nil {
+	if triggerData == nil {
 		return payload, fmt.Errorf("Trigger '%s' not found in definition for state: %s", trigger, state)
 	}
 

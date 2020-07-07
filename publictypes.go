@@ -9,7 +9,8 @@ type CallbackDefinitions struct {
 }
 type PlinkoStateMachine interface {
 	Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error)
-	//GetValidTriggers(payload interfaces.PlinkoPayload) ([]Trigger, error)
+	CanFire(payload PlinkoPayload, trigger Trigger) bool
+	EnumerateActiveTriggers(payload PlinkoPayload) ([]Trigger, error)
 }
 
 type TransitionInfo interface {
