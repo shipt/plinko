@@ -70,11 +70,11 @@ func TestEntryAndExitFunctions(t *testing.T) {
 	assert.Nil(t, stateDef.callbacks.OnExitFn)
 	assert.Nil(t, stateDef.callbacks.OnEntryFn)
 
-	ps = ps.OnEntry(func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error) {
+	ps = ps.OnEntry(func(pp Payload, transitionInfo TransitionInfo) (Payload, error) {
 		return nil, fmt.Errorf("misc error")
 	})
 
-	ps = ps.OnExit(func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error) {
+	ps = ps.OnExit(func(pp Payload, transitionInfo TransitionInfo) (Payload, error) {
 		return nil, fmt.Errorf("misc error")
 	})
 
@@ -163,7 +163,7 @@ func TestStateMachine(t *testing.T) {
 	p.Configure("RejectedOrder")
 
 	compilerOutput := p.Compile()
-	psm := compilerOutput.PlinkoStateMachine
+	psm := compilerOutput.StateMachine
 
 	payload := testPayload{state: NewOrder}
 
@@ -181,7 +181,7 @@ func TestCanFire(t *testing.T) {
 
 	co := p.Compile()
 
-	psm := co.PlinkoStateMachine
+	psm := co.StateMachine
 
 	payload := testPayload{state: Created}
 
@@ -210,7 +210,7 @@ func TestEnumerateTriggers(t *testing.T) {
 
 	co := p.Compile()
 
-	psm := co.PlinkoStateMachine
+	psm := co.StateMachine
 	payload := testPayload{state: Created}
 	triggers, err := psm.EnumerateActiveTriggers(payload)
 
@@ -281,11 +281,11 @@ const (
 	Reviewed State = "Reviewed"
 )
 
-func IsPlatform(pp PlinkoPayload) bool {
+func IsPlatform(pp Payload) bool {
 	return true
 }
 
-func OnNewOrderEntry(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error) {
+func OnNewOrderEntry(pp Payload, transitionInfo TransitionInfo) (Payload, error) {
 	fmt.Printf("onentry: %+v", transitionInfo)
 	return pp, nil
 }

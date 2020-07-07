@@ -4,13 +4,13 @@ type State string
 type Trigger string
 
 type CallbackDefinitions struct {
-	OnEntryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)
-	OnExitFn  func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)
+	OnEntryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
+	OnExitFn  func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
 }
-type PlinkoStateMachine interface {
-	Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error)
-	CanFire(payload PlinkoPayload, trigger Trigger) bool
-	EnumerateActiveTriggers(payload PlinkoPayload) ([]Trigger, error)
+type StateMachine interface {
+	Fire(payload Payload, trigger Trigger) (Payload, error)
+	CanFire(payload Payload, trigger Trigger) bool
+	EnumerateActiveTriggers(payload Payload) ([]Trigger, error)
 }
 
 type TransitionInfo interface {
@@ -21,19 +21,19 @@ type TransitionInfo interface {
 
 type PlinkoDefinition interface {
 	Configure(state State) StateDefinition
-	Compile() PlinkoCompilerOutput
+	Compile() CompilerOutput
 	RenderUml() (Uml, error)
 }
 
 type StateDefinition interface {
 	//State() string
-	OnEntry(entryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition
-	OnExit(exitFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition
+	OnEntry(entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition
+	OnExit(exitFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition
 	Permit(triggerName Trigger, destinationState State) StateDefinition
 	//TBD: AllowReentrance by request, not default
 }
 
-type PlinkoPayload interface {
+type Payload interface {
 	GetState() State
 }
 

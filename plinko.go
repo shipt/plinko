@@ -6,9 +6,9 @@ import (
 
 type Uml string
 
-type PlinkoCompilerOutput struct {
-	PlinkoStateMachine PlinkoStateMachine
-	Messages           []CompilerMessage
+type CompilerOutput struct {
+	StateMachine StateMachine
+	Messages     []CompilerMessage
 }
 
 type plinkoStateMachine struct {
@@ -33,7 +33,7 @@ func (td transitionDef) GetTrigger() Trigger {
 	return td.trigger
 }
 
-func (psm plinkoStateMachine) EnumerateActiveTriggers(payload PlinkoPayload) ([]Trigger, error) {
+func (psm plinkoStateMachine) EnumerateActiveTriggers(payload Payload) ([]Trigger, error) {
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
 
@@ -50,7 +50,7 @@ func (psm plinkoStateMachine) EnumerateActiveTriggers(payload PlinkoPayload) ([]
 
 }
 
-func (psm plinkoStateMachine) CanFire(payload PlinkoPayload, trigger Trigger) bool {
+func (psm plinkoStateMachine) CanFire(payload Payload, trigger Trigger) bool {
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
 
@@ -66,7 +66,7 @@ func (psm plinkoStateMachine) CanFire(payload PlinkoPayload, trigger Trigger) bo
 	return true
 }
 
-func (psm plinkoStateMachine) Fire(payload PlinkoPayload, trigger Trigger) (PlinkoPayload, error) {
+func (psm plinkoStateMachine) Fire(payload Payload, trigger Trigger) (Payload, error) {
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
 
@@ -154,7 +154,7 @@ func (pd plinkoDefinition) RenderUml() (Uml, error) {
 	return uml, nil
 }
 
-func (pd plinkoDefinition) Compile() PlinkoCompilerOutput {
+func (pd plinkoDefinition) Compile() CompilerOutput {
 
 	var compilerMessages []CompilerMessage
 
@@ -180,9 +180,9 @@ func (pd plinkoDefinition) Compile() PlinkoCompilerOutput {
 		pd: pd,
 	}
 
-	co := PlinkoCompilerOutput{
-		Messages:           compilerMessages,
-		PlinkoStateMachine: psm,
+	co := CompilerOutput{
+		Messages:     compilerMessages,
+		StateMachine: psm,
 	}
 
 	return co
@@ -230,13 +230,13 @@ type PlinkoDataStructure struct {
 	States map[State]StateDefinition
 }
 
-func (sd stateDefinition) OnEntry(entryFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition {
+func (sd stateDefinition) OnEntry(entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
 	sd.callbacks.OnEntryFn = entryFn
 
 	return sd
 }
 
-func (sd stateDefinition) OnExit(exitFn func(pp PlinkoPayload, transitionInfo TransitionInfo) (PlinkoPayload, error)) StateDefinition {
+func (sd stateDefinition) OnExit(exitFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
 	sd.callbacks.OnExitFn = exitFn
 
 	return sd
