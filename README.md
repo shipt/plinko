@@ -46,7 +46,7 @@ const Cancel    Trigger = "Cancel"
 const Open      Trigger = "Open"
 const Claim     Trigger = "Claim"
 const Deliver   Trigger = "Deliver"
-const Return    Trigger  = "Return"
+const Return    Trigger = "Return"
 const Reinstate Trigger = "Reinstate"
 ```
 
