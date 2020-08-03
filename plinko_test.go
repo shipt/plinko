@@ -62,6 +62,14 @@ func TestPlinkoAsInterface(t *testing.T) {
 		Permit("Review", "ReviewedOrder")
 }
 
+func entryFunctionForTest(pp Payload, transitionInfo TransitionInfo) (Payload, error) {
+	return nil, fmt.Errorf("misc entry error")
+}
+
+func exitFunctionForTest(pp Payload, transitionInfo TransitionInfo) (Payload, error) {
+	return nil, fmt.Errorf("misc exit error")
+}
+
 func TestEntryAndExitFunctions(t *testing.T) {
 	p := CreateDefinition()
 	ps := p.Configure(NewOrder)
@@ -70,17 +78,16 @@ func TestEntryAndExitFunctions(t *testing.T) {
 	assert.Nil(t, stateDef.callbacks.OnExitFn)
 	assert.Nil(t, stateDef.callbacks.OnEntryFn)
 
-	ps = ps.OnEntry(func(pp Payload, transitionInfo TransitionInfo) (Payload, error) {
-		return nil, fmt.Errorf("misc error")
-	})
+	ps = ps.OnEntry(entryFunctionForTest)
 
-	ps = ps.OnExit(func(pp Payload, transitionInfo TransitionInfo) (Payload, error) {
-		return nil, fmt.Errorf("misc error")
-	})
+	ps = ps.OnExit(exitFunctionForTest)
 
 	stateDef = ps.(stateDefinition)
 	assert.NotNil(t, stateDef.callbacks.OnExitFn)
 	assert.NotNil(t, stateDef.callbacks.OnEntryFn)
+
+	assert.Equal(t, "github.com/shipt/plinko.entryFunctionForTest", stateDef.callbacks.EntryFunctionChain[0])
+	assert.Equal(t, "github.com/shipt/plinko.exitFunctionForTest", stateDef.callbacks.ExitFunctionChain[0])
 }
 
 func TestUndefinedStateCompile(t *testing.T) {

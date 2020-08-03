@@ -2,6 +2,8 @@ package plinko
 
 import (
 	"fmt"
+	"reflect"
+	"runtime"
 )
 
 type Uml string
@@ -194,6 +196,7 @@ func (pd *plinkoDefinition) Configure(state State) StateDefinition {
 	}
 
 	cbd := CallbackDefinitions{}
+
 	sd := stateDefinition{
 		State:     state,
 		Triggers:  make(map[Trigger]*TriggerDefinition),
@@ -230,14 +233,20 @@ type PlinkoDataStructure struct {
 	States map[State]StateDefinition
 }
 
+func getFunctionName(i interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+}
+
 func (sd stateDefinition) OnEntry(entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
 	sd.callbacks.OnEntryFn = entryFn
+	sd.callbacks.EntryFunctionChain = append(sd.callbacks.EntryFunctionChain, getFunctionName(entryFn))
 
 	return sd
 }
 
 func (sd stateDefinition) OnExit(exitFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
 	sd.callbacks.OnExitFn = exitFn
+	sd.callbacks.ExitFunctionChain = append(sd.callbacks.ExitFunctionChain, getFunctionName(exitFn))
 
 	return sd
 }

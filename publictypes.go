@@ -6,6 +6,9 @@ type Trigger string
 type CallbackDefinitions struct {
 	OnEntryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
 	OnExitFn  func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
+
+	EntryFunctionChain []string
+	ExitFunctionChain  []string
 }
 type StateMachine interface {
 	Fire(payload Payload, trigger Trigger) (Payload, error)
