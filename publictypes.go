@@ -22,8 +22,11 @@ type TransitionInfo interface {
 	GetTrigger() Trigger
 }
 
+type SideEffect func(StateAction, Payload, TransitionInfo)
+
 type PlinkoDefinition interface {
 	Configure(state State) StateDefinition
+	SideEffect(sideEffect SideEffect) PlinkoDefinition
 	Compile() CompilerOutput
 	RenderUml() (Uml, error)
 }
@@ -51,4 +54,11 @@ const (
 	CompileError   CompilerReportType = "Compile Error"
 	CompileWarning CompilerReportType = "Compile Warning"
 	// CompileInfo CompilerReportType "Compile Info"
+)
+
+type StateAction string
+
+const (
+	BeforeStateExit StateAction = "BeforeStateExit"
+	AfterStateEntry StateAction = "AfterStateEntry"
 )

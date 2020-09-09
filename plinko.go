@@ -89,15 +89,34 @@ func (psm plinkoStateMachine) Fire(payload Payload, trigger Trigger) (Payload, e
 		trigger:     trigger,
 	}
 
+	callSideEffects(BeforeStateExit, psm.pd.SideEffects, payload, td)
+
 	if sd2.callbacks.OnExitFn != nil {
 		sd2.callbacks.OnExitFn(payload, td)
 	}
+
+	// This is an area where we could emit AfterStateExit and BeforeStateEntry here
+	//
+	// callSideEffects(AfterStateExit, psm.pd.SideEffects, payload, td)
+	// callSideEffects(BeforeStateEntry, psm.pd.SideEffects, payload, td)
 
 	if destinationState.callbacks.OnEntryFn != nil {
 		destinationState.callbacks.OnEntryFn(payload, td)
 	}
 
+	callSideEffects(AfterStateEntry, psm.pd.SideEffects, payload, td)
+
 	return payload, nil
+}
+
+func callSideEffects(stateAction StateAction, sideEffects []SideEffect, payload Payload, transitionInfo TransitionInfo) int {
+	iCount := 0
+	for _, sideEffect := range sideEffects {
+		sideEffect(stateAction, payload, transitionInfo)
+		iCount++
+	}
+
+	return iCount
 }
 
 func CreateDefinition() PlinkoDefinition {
@@ -118,8 +137,9 @@ type abstractSyntax struct {
 }
 
 type plinkoDefinition struct {
-	States *map[State]*stateDefinition
-	abs    abstractSyntax
+	States      *map[State]*stateDefinition
+	SideEffects []SideEffect
+	abs         abstractSyntax
 }
 
 func findDestinationState(states []State, searchState State) bool {
@@ -154,6 +174,11 @@ func (pd plinkoDefinition) RenderUml() (Uml, error) {
 
 	uml += "@enduml"
 	return uml, nil
+}
+
+func (pd *plinkoDefinition) SideEffect(sideEffect SideEffect) PlinkoDefinition {
+	pd.SideEffects = append(pd.SideEffects, sideEffect)
+	return pd
 }
 
 func (pd plinkoDefinition) Compile() CompilerOutput {

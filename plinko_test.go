@@ -139,6 +139,61 @@ func TestUmlDiagramming(t *testing.T) {
 	assert.Equal(t, "\n@enduml", string(uml)[len(uml)-8:])
 }
 
+func TestCallSideEffectsWithNilSet(t *testing.T) {
+
+	result := callSideEffects(BeforeStateExit, nil, nil, nil)
+
+	assert.True(t, result == 0)
+}
+
+func TestCallEffects(t *testing.T) {
+	var effects []SideEffect
+	callCount := 0
+
+	effects = append(effects, func(sa StateAction, p Payload, ti TransitionInfo) {
+		callCount++
+		assert.NotNil(t, p)
+		assert.NotNil(t, ti)
+	})
+
+	payload := testPayload{}
+	trInfo := transitionDef{}
+
+	result := callSideEffects(BeforeStateExit, effects, payload, trInfo)
+
+	assert.Equal(t, result, 1)
+}
+
+func TestCallEffects_Multiple(t *testing.T) {
+	var effects []SideEffect
+	callCount := 0
+
+	effects = append(effects, func(sa StateAction, p Payload, ti TransitionInfo) {
+		callCount++
+		assert.NotNil(t, p)
+		assert.NotNil(t, ti)
+	})
+
+	effects = append(effects, func(sa StateAction, p Payload, ti TransitionInfo) {
+		callCount++
+		assert.NotNil(t, p)
+		assert.NotNil(t, ti)
+	})
+
+	effects = append(effects, func(sa StateAction, p Payload, ti TransitionInfo) {
+		callCount++
+		assert.NotNil(t, p)
+		assert.NotNil(t, ti)
+	})
+
+	payload := testPayload{}
+	trInfo := transitionDef{}
+
+	result := callSideEffects(BeforeStateExit, effects, payload, trInfo)
+
+	assert.Equal(t, result, 3)
+}
+
 type testPayload struct {
 	state State
 }
