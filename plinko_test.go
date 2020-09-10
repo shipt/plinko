@@ -224,12 +224,19 @@ func TestStateMachine(t *testing.T) {
 
 	p.Configure("RejectedOrder")
 
+	visitCount := 0
+	p.SideEffect(func(sa StateAction, payload Payload, ti TransitionInfo) {
+		visitCount += 1
+	})
+
 	compilerOutput := p.Compile()
 	psm := compilerOutput.StateMachine
 
 	payload := testPayload{state: NewOrder}
 
 	psm.Fire(payload, "Submit")
+
+	assert.Equal(t, visitCount, 2)
 
 }
 
