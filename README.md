@@ -18,6 +18,7 @@ An order can be in different states during it's lifecycle:  Open, Claimed, Deliv
 
 * Simple support for states and triggers
 * Entry/Exit events for states
+* Side Effect support for supporting uniform functionality when modifying state
 
 Some useful extensions are also provided:
 
@@ -107,6 +108,79 @@ We can trigger the state processes by creating a PlinkoPayload and handing it to
 payload := appPayload{ /* ... */ }
 fsm.Fire(appPayload, Submit)
 ```
+
+## Side-Effect Support
+
+Side-Effect supports wiring up common functions that respond to state changes happening.   This is a great place for logging and recording movement in a uniform way.
+
+Side Effects are raised at different phases of a state transition.  Given an order that's sitting in a `Created` state that has been actioned with an `Open` trigger, we'll see the following calls to the SideEffect functions.
+
+| State | Action |  Trigger | Destination State |
+| --- | --- | --- | --- |
+| Created | BeforeStateExit | Open | Opened |
+| Created | AfterStateExit | Open | Opened |
+| Created | BeforeStateEntry | Open | Opened |
+| Created | AfterStateEntry | Open | Opened |
+
+In the above list, you can see the registered function is called 4 times throughout the lifecycle of the transition.   This gives us consistency and observability throughout the process.
+
+We can better understand how this works by looking at a standard configuration.  
+
+```go
+// given a standard definition ...
+p := plinko.CreateDefinition()
+
+p.Configure(Created).
+	OnEntry(OnNewOrderEntry).
+	Permit(Open, Opened).
+	Permit(Cancel, Canceled)
+
+p.Configure(Opened).
+	Permit(AddItemToOrder, Opened).
+	Permit(Claim, Claimed).
+	Permit(Cancel, Canceled)
+
+
+// we register for side effects like this.
+p.SideEffect(StateLogging)
+p.SideEffect(MetricsRecording)
+p.FilteredSideEffect(AfterStateEntry, StateEntryRecording)
+```
+
+In the case above, we registered two functions that get executed whenever a change happens.  These functions will always be called in the order they are registered for a given state transition.
+
+In addition, we registered a FilteredSideEffect that only gets called on the requested action.
+
+These are functions that have signature including the starting state, the destination state, the trigger used to kick off the transition and the payload.
+
+```go
+func StateLogging(action StateAction, payload Payload, transitionInfo TransitionInfo) {
+	// this can typically be broken out into a function on the logger, but keeping
+	// it here for clarity in demonstration
+
+	logEntry := StateLog {
+		Action:           action,
+		SourceState:      transitionInfo.GetSource(),
+		DestinationState: transitionInfo.GetDestination(),
+		Trigger:          transitionInfo.GetTrigger(),
+		OrderID:          payload.GetOrderID(),
+	}
+
+	// call to our logger that will decorate the entry with timing information and the like.
+	logger.LogStateInfo(logEntry)
+}
+
+func MetricsRecording(action StateAction, payload Payload, transitionInfo TransitionInfo) {
+	// this can be a simple function that pulls apart the details and 
+	metrics.RecordStateMovement(action, payload, transitionInfo)
+}
+
+```
+
+
+
+
+
 
 ## State Machine documentation
 The fsm can document itself upon a successful compile - emitting PlantUML which can, in turn, be rendered into a state diagram:
