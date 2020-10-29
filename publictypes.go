@@ -59,6 +59,8 @@ const (
 type StateAction string
 
 const (
-	BeforeStateExit StateAction = "BeforeStateExit"
-	AfterStateEntry StateAction = "AfterStateEntry"
+	BeforeStateExit  StateAction = "BeforeStateExit"
+	AfterStateExit   StateAction = "AfterStateExit"
+	BeforeStateEntry StateAction = "BeforeStateEntry"
+	AfterStateEntry  StateAction = "AfterStateEntry"
 )
