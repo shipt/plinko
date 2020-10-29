@@ -95,10 +95,8 @@ func (psm plinkoStateMachine) Fire(payload Payload, trigger Trigger) (Payload, e
 		sd2.callbacks.OnExitFn(payload, td)
 	}
 
-	// This is an area where we could emit AfterStateExit and BeforeStateEntry here
-	//
-	// callSideEffects(AfterStateExit, psm.pd.SideEffects, payload, td)
-	// callSideEffects(BeforeStateEntry, psm.pd.SideEffects, payload, td)
+	callSideEffects(AfterStateExit, psm.pd.SideEffects, payload, td)
+	callSideEffects(BeforeStateEntry, psm.pd.SideEffects, payload, td)
 
 	if destinationState.callbacks.OnEntryFn != nil {
 		destinationState.callbacks.OnEntryFn(payload, td)

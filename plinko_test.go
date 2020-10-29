@@ -236,7 +236,7 @@ func TestStateMachine(t *testing.T) {
 
 	psm.Fire(payload, "Submit")
 
-	assert.Equal(t, visitCount, 2)
+	assert.Equal(t, 4, visitCount)
 
 }
 
