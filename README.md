@@ -171,15 +171,12 @@ func StateLogging(action StateAction, payload Payload, transitionInfo Transition
 }
 
 func MetricsRecording(action StateAction, payload Payload, transitionInfo TransitionInfo) {
-	// this can be a simple function that pulls apart the details and 
+	// this can be a simple function that pulls apart the details and sends them to
+	// things like graphite, influx or any timeseries metrics database for graphing and alerting.
 	metrics.RecordStateMovement(action, payload, transitionInfo)
 }
 
 ```
-
-
-
-
 
 
 ## State Machine documentation
