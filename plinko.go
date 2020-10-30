@@ -107,14 +107,31 @@ func (psm plinkoStateMachine) Fire(payload Payload, trigger Trigger) (Payload, e
 	return payload, nil
 }
 
-func callSideEffects(stateAction StateAction, sideEffects []SideEffect, payload Payload, transitionInfo TransitionInfo) int {
+func callSideEffects(stateAction StateAction, sideEffects []sideEffectDefinition, payload Payload, transitionInfo TransitionInfo) int {
 	iCount := 0
-	for _, sideEffect := range sideEffects {
-		sideEffect(stateAction, payload, transitionInfo)
-		iCount++
+	for _, sideEffectDefinition := range sideEffects {
+		if sideEffectDefinition.Filter&getFilterDefinition(stateAction) > 0 {
+
+			sideEffectDefinition.SideEffect(stateAction, payload, transitionInfo)
+			iCount++
+		}
+	}
+	return iCount
+}
+
+func getFilterDefinition(stateAction StateAction) SideEffectFilter {
+	switch stateAction {
+	case BeforeStateExit:
+		return AllowBeforeStateExit
+	case AfterStateExit:
+		return AllowAfterStateExit
+	case BeforeStateEntry:
+		return AllowBeforeStateEntry
+	case AfterStateEntry:
+		return AllowAfterStateEntry
 	}
 
-	return iCount
+	return 0
 }
 
 func CreateDefinition() PlinkoDefinition {
@@ -134,9 +151,14 @@ type abstractSyntax struct {
 	StateDefinitions   []*stateDefinition
 }
 
+type sideEffectDefinition struct {
+	SideEffect SideEffect
+	Filter     SideEffectFilter
+}
+
 type plinkoDefinition struct {
 	States      *map[State]*stateDefinition
-	SideEffects []SideEffect
+	SideEffects []sideEffectDefinition
 	abs         abstractSyntax
 }
 
@@ -174,8 +196,18 @@ func (pd plinkoDefinition) RenderUml() (Uml, error) {
 	return uml, nil
 }
 
+// this is a convenience constant for registering a global
+const allowAllSideEffects = AllowAfterStateEntry | AllowAfterStateExit | AllowBeforeStateEntry | AllowBeforeStateExit
+
 func (pd *plinkoDefinition) SideEffect(sideEffect SideEffect) PlinkoDefinition {
-	pd.SideEffects = append(pd.SideEffects, sideEffect)
+	pd.SideEffects = append(pd.SideEffects, sideEffectDefinition{Filter: allowAllSideEffects, SideEffect: sideEffect})
+
+	return pd
+}
+
+func (pd *plinkoDefinition) FilteredSideEffect(filter SideEffectFilter, sideEffect SideEffect) PlinkoDefinition {
+	pd.SideEffects = append(pd.SideEffects, sideEffectDefinition{Filter: filter, SideEffect: sideEffect})
+
 	return pd
 }
 
