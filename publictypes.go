@@ -25,8 +25,8 @@ type TransitionInfo interface {
 type SideEffect func(StateAction, Payload, TransitionInfo)
 
 type PlinkoDefinition interface {
-	Configure(state State) StateDefinition
-	SideEffect(sideEffect SideEffect) PlinkoDefinition
+	Configure(State) StateDefinition
+	SideEffect(SideEffect) PlinkoDefinition
 	FilteredSideEffect(SideEffectFilter, SideEffect) PlinkoDefinition
 	Compile() CompilerOutput
 	RenderUml() (Uml, error)
@@ -34,9 +34,9 @@ type PlinkoDefinition interface {
 
 type StateDefinition interface {
 	//State() string
-	OnEntry(entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition
-	OnExit(exitFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition
-	Permit(triggerName Trigger, destinationState State) StateDefinition
+	OnEntry(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
+	OnExit(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
+	Permit(Trigger, State) StateDefinition
 	//TBD: AllowReentrance by request, not default
 }
 
