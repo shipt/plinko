@@ -193,12 +193,25 @@ func TestCallEffects_Multiple(t *testing.T) {
 		assert.NotNil(t, ti)
 	}})
 
+	effects = append(effects, sideEffectDefinition{Filter: AllowAfterStateExit, SideEffect: func(sa StateAction, p Payload, ti TransitionInfo) {
+		callCount++
+		assert.NotNil(t, p)
+		assert.NotNil(t, ti)
+	}})
+
 	payload := testPayload{}
 	trInfo := transitionDef{}
 
-	_ = callSideEffects(BeforeStateExit, effects, payload, trInfo)
+	count := callSideEffects(BeforeStateExit, effects, payload, trInfo)
 
 	assert.Equal(t, 3, callCount)
+	assert.Equal(t, 3, count)
+
+	callCount = 0
+	count = callSideEffects(AfterStateExit, effects, payload, trInfo)
+
+	assert.Equal(t, 4, callCount)
+	assert.Equal(t, 4, count)
 }
 
 type testPayload struct {
