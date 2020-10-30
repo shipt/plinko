@@ -26,6 +26,13 @@ func TestStateDefinition(t *testing.T) {
 
 }
 
+func TestStateActionToFilterConversion(t *testing.T) {
+	assert.Equal(t, AllowBeforeStateExit, getFilterDefinition(BeforeStateExit))
+	assert.Equal(t, AllowAfterStateExit, getFilterDefinition(AfterStateExit))
+	assert.Equal(t, AllowBeforeStateEntry, getFilterDefinition(BeforeStateEntry))
+	assert.Equal(t, AllowAfterStateEntry, getFilterDefinition(AfterStateEntry))
+}
+
 func TestPlinkoDefinition(t *testing.T) {
 	stateMap := make(map[State]*stateDefinition)
 	plinko := plinkoDefinition{
@@ -147,14 +154,14 @@ func TestCallSideEffectsWithNilSet(t *testing.T) {
 }
 
 func TestCallEffects(t *testing.T) {
-	var effects []SideEffect
+	var effects []sideEffectDefinition
 	callCount := 0
 
-	effects = append(effects, func(sa StateAction, p Payload, ti TransitionInfo) {
+	effects = append(effects, sideEffectDefinition{Filter: allowAllSideEffects, SideEffect: func(sa StateAction, p Payload, ti TransitionInfo) {
 		callCount++
 		assert.NotNil(t, p)
 		assert.NotNil(t, ti)
-	})
+	}})
 
 	payload := testPayload{}
 	trInfo := transitionDef{}
@@ -165,33 +172,33 @@ func TestCallEffects(t *testing.T) {
 }
 
 func TestCallEffects_Multiple(t *testing.T) {
-	var effects []SideEffect
+	var effects []sideEffectDefinition
 	callCount := 0
 
-	effects = append(effects, func(sa StateAction, p Payload, ti TransitionInfo) {
+	effects = append(effects, sideEffectDefinition{Filter: allowAllSideEffects, SideEffect: func(sa StateAction, p Payload, ti TransitionInfo) {
 		callCount++
 		assert.NotNil(t, p)
 		assert.NotNil(t, ti)
-	})
+	}})
 
-	effects = append(effects, func(sa StateAction, p Payload, ti TransitionInfo) {
+	effects = append(effects, sideEffectDefinition{Filter: allowAllSideEffects, SideEffect: func(sa StateAction, p Payload, ti TransitionInfo) {
 		callCount++
 		assert.NotNil(t, p)
 		assert.NotNil(t, ti)
-	})
+	}})
 
-	effects = append(effects, func(sa StateAction, p Payload, ti TransitionInfo) {
+	effects = append(effects, sideEffectDefinition{Filter: allowAllSideEffects, SideEffect: func(sa StateAction, p Payload, ti TransitionInfo) {
 		callCount++
 		assert.NotNil(t, p)
 		assert.NotNil(t, ti)
-	})
+	}})
 
 	payload := testPayload{}
 	trInfo := transitionDef{}
 
-	result := callSideEffects(BeforeStateExit, effects, payload, trInfo)
+	_ = callSideEffects(BeforeStateExit, effects, payload, trInfo)
 
-	assert.Equal(t, result, 3)
+	assert.Equal(t, 3, callCount)
 }
 
 type testPayload struct {

@@ -27,6 +27,7 @@ type SideEffect func(StateAction, Payload, TransitionInfo)
 type PlinkoDefinition interface {
 	Configure(state State) StateDefinition
 	SideEffect(sideEffect SideEffect) PlinkoDefinition
+	FilteredSideEffect(SideEffectFilter, SideEffect) PlinkoDefinition
 	Compile() CompilerOutput
 	RenderUml() (Uml, error)
 }
@@ -63,4 +64,13 @@ const (
 	AfterStateExit   StateAction = "AfterStateExit"
 	BeforeStateEntry StateAction = "BeforeStateEntry"
 	AfterStateEntry  StateAction = "AfterStateEntry"
+)
+
+type SideEffectFilter int
+
+const (
+	AllowBeforeStateExit  SideEffectFilter = 1
+	AllowAfterStateExit   SideEffectFilter = 2
+	AllowBeforeStateEntry SideEffectFilter = 4
+	AllowAfterStateEntry  SideEffectFilter = 8
 )
