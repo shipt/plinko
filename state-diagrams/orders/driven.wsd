@@ -1,0 +1,37 @@
+@startuml Driven
+title Driven
+Delivery_Broker : API entry point for Driven Orders
+
+Delivery_Broker -[#blue]-> created
+created : updates to order allowed
+created -> open
+
+Delivery_Broker -[#blue]-> open
+open : order is visible to shoppers
+
+open -[#green]-> claimed
+claimed : shopper has claimed the delivery 
+
+claimed -[#green]-> shopper_arrived
+shopper_arrived : shopper is at the partner's store
+shopper_arrived : shopper may be waiting for the delivery
+
+shopper_arrived -[#green]-> picked_up
+picked_up : shopper has the delivery
+
+picked_up -[#green]-> delivered
+delivered : shopper has dropped off the order to the partner customer
+
+picked_up -[#red]-> returned
+delivered -[#red]-> returned
+returned : order is returned
+
+open -[#red]-> canceled
+claimed -[#red]-> canceled
+shopper_arrived -[#red]-> canceled
+canceled : order is cancelled
+
+canceled -[#red]-> [*]
+returned -[#red]-> [*]
+delivered -[#green]-> [*]
+@enduml
