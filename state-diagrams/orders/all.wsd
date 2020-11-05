@@ -1,0 +1,61 @@
+@startuml All Order Types
+title All Order Types
+Platform_Broker -[#blue]-> open
+Platform_Broker : API entry point for Platform Orders
+
+Shipt_com -[#blue]-> open
+Shipt_com : shipt.com allows members to submit orders
+open : order is created and scheduled
+
+Delivery_Broker : API entry point for Driven Orders
+Delivery_Broker -[#blue]-> open
+Delivery_Broker -[#blue]-> created
+note left : Driven Only
+created : updates to order allowed
+created -[#green]> open
+
+open -[#green]-> claimed
+claimed : shopper has claimed the delivery 
+claimed -[#green]-> shopper_arrived
+note top : Driven Only
+claimed -[#green]-> shopping
+
+shopper_arrived : shopper is at the partner's store
+shopper_arrived : shopper may be waiting for the delivery
+shopper_arrived -[#green]-> picked_up
+note top : Driven Only
+
+shopping : shopper is at the partner's store
+shopping -[#green]-> processed
+
+picked_up : shopper has the delivery
+picked_up -[#green]-> delivered
+
+processed -[#green]-> ready_for_pickup
+note bottom : Pickup Orders
+
+processed -[#green]-> delivered
+processed : order has been checked out and credit card charged
+
+ready_for_pickup : order is ready for the customer to pick up at the store
+ready_for_pickup -[#green]-> delivered
+
+delivered : order has been delivered to the customer
+
+processed -[#red]-> returned
+ready_for_pickup -[#red]-> returned
+picked_up -[#red]-> returned
+delivered -[#red]-> returned
+returned : order is returned
+
+open -[#red]-> cancelled
+claimed -[#red]-> cancelled
+shopping -[#red]-> cancelled
+shopper_arrived -[#red]-> cancelled
+processed -[#red]-> cancelled
+cancelled : order is cancelled
+
+cancelled -[#red]-> [*]
+returned -[#red]-> [*]
+delivered -[#green]-> [*]
+@enduml
