@@ -4,7 +4,7 @@ type State string
 type Trigger string
 
 type CallbackDefinitions struct {
-	OnEntryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
+	OnEntryFn []func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
 	OnExitFn  func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
 
 	EntryFunctionChain []string
