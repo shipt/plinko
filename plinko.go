@@ -98,8 +98,14 @@ func (psm plinkoStateMachine) Fire(payload Payload, trigger Trigger) (Payload, e
 	callSideEffects(AfterStateExit, psm.pd.SideEffects, payload, td)
 	callSideEffects(BeforeStateEntry, psm.pd.SideEffects, payload, td)
 
-	if destinationState.callbacks.OnEntryFn != nil {
-		destinationState.callbacks.OnEntryFn(payload, td)
+	if destinationState.callbacks.OnEntryFn != nil && len(destinationState.callbacks.OnEntryFn) > 0 {
+		for _, fn := range destinationState.callbacks.OnEntryFn {
+			payload, e := fn(payload, td)
+
+			if e != nil {
+				return payload, e
+			}
+		}
 	}
 
 	callSideEffects(AfterStateEntry, psm.pd.SideEffects, payload, td)
@@ -293,7 +299,7 @@ func getFunctionName(i interface{}) string {
 }
 
 func (sd stateDefinition) OnEntry(entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
-	sd.callbacks.OnEntryFn = entryFn
+	sd.callbacks.OnEntryFn = append(sd.callbacks.OnEntryFn, entryFn)
 	sd.callbacks.EntryFunctionChain = append(sd.callbacks.EntryFunctionChain, getFunctionName(entryFn))
 
 	return sd
