@@ -260,6 +260,39 @@ func TestStateMachine(t *testing.T) {
 
 }
 
+func TestOnEntryTriggerOperation(t *testing.T) {
+
+	p := CreateDefinition()
+	counter := 0
+
+	p.Configure(NewOrder).
+		Permit("Submit", "PublishedOrder").
+		Permit("Review", "UnderReview")
+
+	p.Configure("PublishedOrder").
+		OnTriggerEntry("Resupply", func(pp Payload, transitionInfo TransitionInfo) (Payload, error) {
+			counter++
+			return pp, nil
+		}).
+		Permit("Resupply", "PublishedOrder").
+		Permit("Resubmit", "PublishedOrder")
+
+	compilerOutput := p.Compile()
+	psm := compilerOutput.StateMachine
+
+	payload := testPayload{state: "PublishedOrder"}
+
+	psm.Fire(payload, "Resupply")
+	assert.Equal(t, 1, counter)
+
+	psm.Fire(payload, "Resubmit")
+	assert.Equal(t, 1, counter)
+
+	psm.Fire(payload, "Resupply")
+	assert.Equal(t, 2, counter)
+
+}
+
 func TestCanFire(t *testing.T) {
 	p := CreateDefinition()
 

@@ -109,6 +109,48 @@ payload := appPayload{ /* ... */ }
 fsm.Fire(appPayload, Submit)
 ```
 
+## Functional Composition
+
+When entering or exiting a state, a series of functions need to act to make that transition complete.  Some transitions are simple, and some are complex.  The key here is creating a series of steps that are testable and operate based on a standard pattern. 
+
+Let's take a look at a piece of code we setup earlier:
+
+
+```go 
+p.Configure(Created).
+	OnEntry(OnNewOrderEntry).
+	Permit(Open, Opened).
+	Permit(AddItem, Created)
+```
+
+OnNewOrderEntry is function defined as such:
+
+``` go
+func OnNewOrderEntry(p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload, error) {
+	// perform a series of steps based on the 
+	// payload and transition info
+	// ...
+
+	return p, nil
+}
+```
+
+This is useful for a couple of reasons: First, this becomes one distinct action that can succeed or fail.  When it succeeds, the chain continues and works toward the successful transition to the new state. And second, this is an operation that can be tested in isolation.  
+
+Both of these reasons are significant when building a complex set of transitions.
+
+Next, we have a variation on the chaining where we can say "only run this function if a particular trigger triggered the transition".   This is the `OnTriggerEntry(trigger, func)` function.
+
+```go 
+p.Configure(Created).
+	OnTriggerEntry(AddItem, RecalculateTotals).
+	Permit(Open, Opened).
+	Permit(AddItem, Created)
+```
+
+ In the example above, the `RecalculateTotals` function is only executed when the `AddItem` trigger is raised.   This allows us to explicitly describe the transition steps without placing that complexity inside the `RecalculateTotals` function.
+
+
 ## Side-Effect Support
 
 Side-Effect supports wiring up common functions that respond to state changes happening.   This is a great place for logging and recording movement in a uniform way.
