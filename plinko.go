@@ -17,6 +17,11 @@ type plinkoStateMachine struct {
 	pd plinkoDefinition
 }
 
+type chainedFunctionCall struct {
+	Predicate func(pp Payload, transitionInfo TransitionInfo) bool
+	Operation func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
+}
+
 type transitionDef struct {
 	source      State
 	destination State
@@ -100,7 +105,13 @@ func (psm plinkoStateMachine) Fire(payload Payload, trigger Trigger) (Payload, e
 
 	if destinationState.callbacks.OnEntryFn != nil && len(destinationState.callbacks.OnEntryFn) > 0 {
 		for _, fn := range destinationState.callbacks.OnEntryFn {
-			payload, e := fn(payload, td)
+			if fn.Predicate != nil {
+				if !fn.Predicate(payload, td) {
+					continue
+				}
+			}
+
+			payload, e := fn.Operation(payload, td)
 
 			if e != nil {
 				return payload, e
@@ -299,8 +310,22 @@ func getFunctionName(i interface{}) string {
 }
 
 func (sd stateDefinition) OnEntry(entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
-	sd.callbacks.OnEntryFn = append(sd.callbacks.OnEntryFn, entryFn)
+	sd.callbacks.OnEntryFn = append(sd.callbacks.OnEntryFn, chainedFunctionCall{
+		Predicate: nil,
+		Operation: entryFn,
+	})
 	sd.callbacks.EntryFunctionChain = append(sd.callbacks.EntryFunctionChain, getFunctionName(entryFn))
+
+	return sd
+}
+
+func (sd stateDefinition) OnTriggerEntry(trigger Trigger, entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
+	sd.callbacks.OnEntryFn = append(sd.callbacks.OnEntryFn, chainedFunctionCall{
+		Predicate: func(_ Payload, t TransitionInfo) bool {
+			return t.GetTrigger() == trigger
+		},
+		Operation: entryFn,
+	})
 
 	return sd
 }

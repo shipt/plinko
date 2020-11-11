@@ -4,7 +4,7 @@ type State string
 type Trigger string
 
 type CallbackDefinitions struct {
-	OnEntryFn []func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
+	OnEntryFn []chainedFunctionCall
 	OnExitFn  func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
 
 	EntryFunctionChain []string
@@ -35,6 +35,7 @@ type PlinkoDefinition interface {
 type StateDefinition interface {
 	//State() string
 	OnEntry(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
+	OnTriggerEntry(Trigger, func(Payload, TransitionInfo) (Payload, error)) StateDefinition
 	OnExit(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
 	Permit(Trigger, State) StateDefinition
 	//TBD: AllowReentrance by request, not default
