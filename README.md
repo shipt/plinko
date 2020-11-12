@@ -109,6 +109,45 @@ payload := appPayload{ /* ... */ }
 fsm.Fire(appPayload, Submit)
 ```
 
+## Permitted Transitions
+
+The state machine allows the definitions of transitions using the `Permit` function.  This means I can declare that a triggered action can happen on one state, but not another using:
+
+```go
+p.Configure(Opened).
+	// ...
+	Permit(Cancel, Canceled)
+
+p.Configure(Claimed).
+	// The key here is that Canceling from a Claimed state is not permitted.
+```
+
+This is useful, because I now have guard rails around when a `Cancel` trigger can be used and when it cannot.  Furthermore, I can use the `CanFire()` method of the state machine to ask if I have a valid action:
+
+```go
+if !fsm.CanFire(payload, Cancel) {
+	return "Cannot perform this action"
+}
+```
+
+Furthermore, let's say `Cancel` is allowed within a timeframe described in the payload.  In this case, let's say it's valid when our order is more than 1 hour from being scheduled to shop.  In this, we first define a predicate function:
+
+```go
+func IsOrderCancellable(p Payload, t TransitionInfo) bool {
+	return p.ScheduledToShop().Sub(time.Now()).Hours(1) >= 1
+}
+```
+
+In this case, I define the trigger differently with:
+
+```go
+p.Configure(Claimed).
+   .PermitIf(IsOrderCancellable, Cancel, Cancelled)
+```
+
+Using `PermitIf` now allows the `fsm.CanFire` code block above to be execute without modification,  but now the state machine validates if the trigger can be used based on the order's scheduled to shop time.
+
+
 ## Functional Composition
 
 When entering or exiting a state, a series of functions need to act to make that transition complete.  Some transitions are simple, and some are complex.  The key here is creating a series of steps that are testable and operate based on a standard pattern. 

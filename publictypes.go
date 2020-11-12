@@ -38,6 +38,7 @@ type StateDefinition interface {
 	OnTriggerEntry(Trigger, func(Payload, TransitionInfo) (Payload, error)) StateDefinition
 	OnExit(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
 	Permit(Trigger, State) StateDefinition
+	PermitIf(func(Payload, TransitionInfo) bool, Trigger, State) StateDefinition
 	//TBD: AllowReentrance by request, not default
 }
 
