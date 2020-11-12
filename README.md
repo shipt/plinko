@@ -141,7 +141,7 @@ func IsOrderCancellable(p Payload, t TransitionInfo) bool {
 In this case, I define the trigger differently with:
 
 ```go
-p.Configure(Opened).
+p.Configure(Claimed).
    .PermitIf(IsOrderCancellable, Cancel, Cancelled)
 ```
 
