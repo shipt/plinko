@@ -145,7 +145,7 @@ p.Configure(Claimed).
    .PermitIf(IsOrderCancellable, Cancel, Cancelled)
 ```
 
-Using `PermitIf` now allows the `fsm.CanFire` code block above to be execute without modification,  but now the state machine validates if the trigger can be used based on the order's scheduled to shop time.
+Using `PermitIf` now allows the `fsm.CanFire` code block above to be executed without modification,  but now the state machine validates if the trigger can be used based on the order's scheduled to shop time.
 
 
 ## Functional Composition
