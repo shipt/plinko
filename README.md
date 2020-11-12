@@ -134,7 +134,7 @@ Furthermore, let's say `Cancel` is allowed within a timeframe described in the p
 
 ```go
 func IsOrderCancellable(p Payload, t TransitionInfo) bool {
-	return p.ScheduledToShop().Sub(time.Now()).Hours(1) >= 1
+	return p.ScheduledToShop().Sub(time.Now()).Hours() >= 1
 }
 ```
 
