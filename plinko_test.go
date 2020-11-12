@@ -215,7 +215,8 @@ func TestCallEffects_Multiple(t *testing.T) {
 }
 
 type testPayload struct {
-	state State
+	state     State
+	condition bool
 }
 
 func (p testPayload) GetState() State {
@@ -309,6 +310,35 @@ func TestCanFire(t *testing.T) {
 
 	assert.True(t, psm.CanFire(payload, Open))
 	assert.False(t, psm.CanFire(payload, Deliver))
+}
+
+func PermitIfPredicate(p Payload, t TransitionInfo) bool {
+	tp := p.(testPayload)
+
+	return tp.condition
+}
+
+func TestCanFireWithPermitIf(t *testing.T) {
+	p := CreateDefinition()
+
+	p.Configure(Created).
+		PermitIf(PermitIfPredicate, Open, Opened)
+
+	p.Configure(Opened)
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+
+	payload := testPayload{
+		state:     Created,
+		condition: true,
+	}
+	assert.True(t, psm.CanFire(payload, Open))
+
+	payload.condition = false
+	assert.False(t, psm.CanFire(payload, Open))
+
 }
 
 func findTrigger(triggers []Trigger, trigger Trigger) bool {

@@ -70,6 +70,14 @@ func (psm plinkoStateMachine) CanFire(payload Payload, trigger Trigger) bool {
 		return false
 	}
 
+	if triggerData.Predicate != nil {
+		return triggerData.Predicate(payload, transitionDef{
+			destination: triggerData.DestinationState,
+			source:      state,
+			trigger:     triggerData.Name,
+		})
+	}
+
 	return true
 }
 
@@ -290,6 +298,7 @@ type compileInfo struct {
 type TriggerDefinition struct {
 	Name             Trigger
 	DestinationState State
+	Predicate        func(Payload, TransitionInfo) bool
 }
 
 type stateDefinition struct {
@@ -337,17 +346,29 @@ func (sd stateDefinition) OnExit(exitFn func(pp Payload, transitionInfo Transiti
 	return sd
 }
 
-func (sd stateDefinition) Permit(triggerName Trigger, destinationState State) StateDefinition {
-	if _, ok := sd.Triggers[triggerName]; ok {
-		panic(fmt.Sprintf("Trigger: %s - has already been defined, plinko configuration invalid.", triggerName))
-	}
-	td := TriggerDefinition{
-		Name:             triggerName,
-		DestinationState: destinationState,
-	}
-	sd.Triggers[triggerName] = &td
-
-	sd.abs.TriggerDefinitions = append(sd.abs.TriggerDefinitions, td)
+func (sd stateDefinition) Permit(trigger Trigger, destinationState State) StateDefinition {
+	addPermit(&sd, trigger, destinationState, nil)
 
 	return sd
+}
+
+func (sd stateDefinition) PermitIf(predicate func(Payload, TransitionInfo) bool, trigger Trigger, destinationState State) StateDefinition {
+	addPermit(&sd, trigger, destinationState, predicate)
+
+	return sd
+}
+
+func addPermit(sd *stateDefinition, trigger Trigger, destination State, predicate func(Payload, TransitionInfo) bool) {
+	if _, ok := sd.Triggers[trigger]; ok {
+		panic(fmt.Sprintf("Trigger: %s - has already been defined, plinko configuration invalid.", trigger))
+	}
+
+	td := TriggerDefinition{
+		Name:             trigger,
+		DestinationState: destination,
+		Predicate:        predicate,
+	}
+
+	sd.Triggers[trigger] = &td
+	sd.abs.TriggerDefinitions = append(sd.abs.TriggerDefinitions, td)
 }
