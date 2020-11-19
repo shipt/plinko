@@ -89,7 +89,7 @@ func TestEntryAndExitFunctions(t *testing.T) {
 
 	ps = ps.OnExit(exitFunctionForTest)
 
-	stateDef = ps.(stateDefinition)
+	stateDef = ps.(plinko.stateDefinition)
 	assert.NotNil(t, stateDef.callbacks.OnExitFn)
 	assert.NotNil(t, stateDef.callbacks.OnEntryFn)
 

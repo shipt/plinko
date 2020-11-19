@@ -6,20 +6,53 @@ import (
 	"runtime"
 )
 
-type Uml string
+type stateDefinition struct {
+	State    State
+	Triggers map[Trigger]*TriggerDefinition
 
-type CompilerOutput struct {
-	StateMachine StateMachine
-	Messages     []CompilerMessage
+	callbacks *CallbackDefinitions
+
+	abs *abstractSyntax
 }
 
-type plinkoStateMachine struct {
-	pd plinkoDefinition
+func (sd stateDefinition) OnEntry(entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
+	sd.callbacks.OnEntryFn = append(sd.callbacks.OnEntryFn, chainedFunctionCall{
+		Predicate: nil,
+		Operation: entryFn,
+	})
+	sd.callbacks.EntryFunctionChain = append(sd.callbacks.EntryFunctionChain, getFunctionName(entryFn))
+
+	return sd
 }
 
-type chainedFunctionCall struct {
-	Predicate func(pp Payload, transitionInfo TransitionInfo) bool
-	Operation func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
+func (sd stateDefinition) OnTriggerEntry(trigger Trigger, entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
+	sd.callbacks.OnEntryFn = append(sd.callbacks.OnEntryFn, chainedFunctionCall{
+		Predicate: func(_ Payload, t TransitionInfo) bool {
+			return t.GetTrigger() == trigger
+		},
+		Operation: entryFn,
+	})
+
+	return sd
+}
+
+func (sd stateDefinition) OnExit(exitFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
+	sd.callbacks.OnExitFn = exitFn
+	sd.callbacks.ExitFunctionChain = append(sd.callbacks.ExitFunctionChain, getFunctionName(exitFn))
+
+	return sd
+}
+
+func (sd stateDefinition) Permit(trigger Trigger, destinationState State) StateDefinition {
+	addPermit(&sd, trigger, destinationState, nil)
+
+	return sd
+}
+
+func (sd stateDefinition) PermitIf(predicate func(Payload, TransitionInfo) bool, trigger Trigger, destinationState State) StateDefinition {
+	addPermit(&sd, trigger, destinationState, predicate)
+
+	return sd
 }
 
 type transitionDef struct {
@@ -159,17 +192,6 @@ func getFilterDefinition(stateAction StateAction) SideEffectFilter {
 	return 0
 }
 
-func CreateDefinition() PlinkoDefinition {
-	stateMap := make(map[State]*stateDefinition)
-	plinko := plinkoDefinition{
-		States: &stateMap,
-	}
-
-	plinko.abs = abstractSyntax{}
-
-	return &plinko
-}
-
 type abstractSyntax struct {
 	States             []State
 	TriggerDefinitions []TriggerDefinition
@@ -301,61 +323,12 @@ type TriggerDefinition struct {
 	Predicate        func(Payload, TransitionInfo) bool
 }
 
-type stateDefinition struct {
-	State    State
-	Triggers map[Trigger]*TriggerDefinition
-
-	callbacks *CallbackDefinitions
-
-	abs *abstractSyntax
-}
-
 type PlinkoDataStructure struct {
 	States map[State]StateDefinition
 }
 
 func getFunctionName(i interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
-}
-
-func (sd stateDefinition) OnEntry(entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
-	sd.callbacks.OnEntryFn = append(sd.callbacks.OnEntryFn, chainedFunctionCall{
-		Predicate: nil,
-		Operation: entryFn,
-	})
-	sd.callbacks.EntryFunctionChain = append(sd.callbacks.EntryFunctionChain, getFunctionName(entryFn))
-
-	return sd
-}
-
-func (sd stateDefinition) OnTriggerEntry(trigger Trigger, entryFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
-	sd.callbacks.OnEntryFn = append(sd.callbacks.OnEntryFn, chainedFunctionCall{
-		Predicate: func(_ Payload, t TransitionInfo) bool {
-			return t.GetTrigger() == trigger
-		},
-		Operation: entryFn,
-	})
-
-	return sd
-}
-
-func (sd stateDefinition) OnExit(exitFn func(pp Payload, transitionInfo TransitionInfo) (Payload, error)) StateDefinition {
-	sd.callbacks.OnExitFn = exitFn
-	sd.callbacks.ExitFunctionChain = append(sd.callbacks.ExitFunctionChain, getFunctionName(exitFn))
-
-	return sd
-}
-
-func (sd stateDefinition) Permit(trigger Trigger, destinationState State) StateDefinition {
-	addPermit(&sd, trigger, destinationState, nil)
-
-	return sd
-}
-
-func (sd stateDefinition) PermitIf(predicate func(Payload, TransitionInfo) bool, trigger Trigger, destinationState State) StateDefinition {
-	addPermit(&sd, trigger, destinationState, predicate)
-
-	return sd
 }
 
 func addPermit(sd *stateDefinition, trigger Trigger, destination State, predicate func(Payload, TransitionInfo) bool) {
