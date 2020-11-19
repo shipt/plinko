@@ -1,13 +1,5 @@
 package plinko
 
-import (
-	"fmt"
-	"testing"
-
-	"github.com/shipt/plinko/pkg/config"
-	"github.com/stretchr/testify/assert"
-)
-
 /*func TestStateActionToFilterConversion(t *testing.T) {
 	assert.Equal(t, AllowBeforeStateExit, getFilterDefinition(BeforeStateExit))
 	assert.Equal(t, AllowAfterStateExit, getFilterDefinition(AfterStateExit))
@@ -15,33 +7,7 @@ import (
 	assert.Equal(t, AllowAfterStateEntry, getFilterDefinition(AfterStateEntry))
 }
 
-func TestPlinkoDefinition(t *testing.T) {
-	stateMap := make(map[State]*runtime.stateDefinition)
-	plinko := plinkoDefinition{
-		States: &stateMap,
-	}
 
-	assert.NotPanics(t, func() {
-		plinko.Configure("NewOrder").
-			//			OnEntry()
-			//			OnExit()
-			Permit("Submit", "PublishedOrder").
-			Permit("Review", "ReviewOrder")
-
-		plinko.Configure("PublishedOrder")
-		plinko.Configure("ReviewOrder")
-	})
-
-	assert.Panics(t, func() {
-		plinko.Configure("NewOrder").
-			Permit("Submit", "PublishedOrder").
-			Permit("Review", "ReviewOrder")
-
-		plinko.Configure("PublishedOrder")
-		plinko.Configure("ReviewOrder")
-		plinko.Configure("NewOrder")
-	})
-}
 */
 
 const Created State = "Created"
@@ -61,63 +27,6 @@ const Claim Trigger = "Claim"
 const Deliver Trigger = "Deliver"
 const Return Trigger = "Return"
 const Reinstate Trigger = "Reinstate"
-
-func TestPlinkoAsInterface(t *testing.T) {
-	p := config.CreateDefinition()
-
-	p.Configure("NewOrder").
-		Permit("Submit", "PublishedOrder").
-		Permit("Review", "ReviewedOrder")
-}
-
-func TestUndefinedStateCompile(t *testing.T) {
-	p := config.CreateDefinition()
-
-	p.Configure(NewOrder).
-		Permit("Submit", "PublishedOrder")
-
-	compilerOutput := p.Compile()
-	assert.Equal(t, 1, len(compilerOutput.Messages))
-	assert.Equal(t, CompileError, compilerOutput.Messages[0].CompileMessage)
-	assert.Equal(t, "State 'PublishedOrder' undefined: Trigger 'Submit' declares a transition to this undefined state.", compilerOutput.Messages[0].Message)
-}
-
-func TestTriggerlessStateCompile(t *testing.T) {
-	p := config.CreateDefinition()
-
-	p.Configure(NewOrder).
-		Permit("Submit", "PublishedOrder")
-	p.Configure("PublishedOrder")
-
-	compilerOutput := p.Compile()
-	assert.Equal(t, 1, len(compilerOutput.Messages))
-	assert.Equal(t, CompileWarning, compilerOutput.Messages[0].CompileMessage)
-	assert.Equal(t, "State 'PublishedOrder' is a state without any triggers (deadend state).", compilerOutput.Messages[0].Message)
-}
-
-func TestUmlDiagramming(t *testing.T) {
-	p := config.CreateDefinition()
-
-	p.Configure(NewOrder).
-		Permit("Submit", "PublishedOrder").
-		Permit("Review", "UnderReview")
-
-	p.Configure("PublishedOrder")
-
-	p.Configure("UnderReview").
-		Permit("CompleteReview", "PublishedOrder").
-		Permit("RejectOrder", "RejectedOrder")
-
-	p.Configure("RejectedOrder")
-
-	uml, err := p.RenderUml()
-
-	fmt.Println(uml)
-
-	assert.Nil(t, err)
-	assert.Equal(t, "@startuml\n[*] -> NewOrder \nNewOrder", string(uml)[0:35])
-	assert.Equal(t, "\n@enduml", string(uml)[len(uml)-8:])
-}
 
 /*
 func TestCallSideEffectsWithNilSet(t *testing.T) {

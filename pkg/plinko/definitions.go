@@ -55,19 +55,17 @@ const (
 type StateAction string
 
 const (
-	BeforeStateExit  StateAction = "BeforeStateExit"
-	AfterStateExit   StateAction = "AfterStateExit"
-	BeforeStateEntry StateAction = "BeforeStateEntry"
-	AfterStateEntry  StateAction = "AfterStateEntry"
+	BeforeTransition StateAction = "BeforeStateExit"
+	BetweenStates    StateAction = "AfterStateExit"
+	AfterTransition  StateAction = "BeforeStateEntry"
 )
 
 type SideEffectFilter int
 
 const (
-	AllowBeforeStateExit  SideEffectFilter = 1
-	AllowAfterStateExit   SideEffectFilter = 2
-	AllowBeforeStateEntry SideEffectFilter = 4
-	AllowAfterStateEntry  SideEffectFilter = 8
+	AllowBeforeTransition SideEffectFilter = 1
+	AllowBetweenStates    SideEffectFilter = 2
+	AllowAfterTransition  SideEffectFilter = 4
 )
 
 type Uml string

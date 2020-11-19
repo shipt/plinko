@@ -198,10 +198,9 @@ Side Effects are raised at different phases of a state transition.  Given an ord
 
 | State | Action |  Trigger | Destination State |
 | --- | --- | --- | --- |
-| Created | BeforeStateExit | Open | Opened |
-| Created | AfterStateExit | Open | Opened |
-| Created | BeforeStateEntry | Open | Opened |
-| Created | AfterStateEntry | Open | Opened |
+| Created | BeforeTransition | Open | Opened |
+| Created | BetweenStates | Open | Opened |
+| Created | AfterTransition | Open | Opened |
 
 In the above list, you can see the registered function is called 4 times throughout the lifecycle of the transition.   This gives us consistency and observability throughout the process.
 

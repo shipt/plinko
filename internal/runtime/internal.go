@@ -153,14 +153,13 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 		trigger:     trigger,
 	}
 
-	callSideEffects(plinko.BeforeStateExit, psm.pd.SideEffects, payload, td)
+	callSideEffects(plinko.BeforeTransition, psm.pd.SideEffects, payload, td)
 
 	if sd2.Callbacks.OnExitFn != nil {
 		sd2.Callbacks.OnExitFn(payload, td)
 	}
 
-	callSideEffects(plinko.AfterStateExit, psm.pd.SideEffects, payload, td)
-	callSideEffects(plinko.BeforeStateEntry, psm.pd.SideEffects, payload, td)
+	callSideEffects(plinko.BetweenStates, psm.pd.SideEffects, payload, td)
 
 	if destinationState.Callbacks.OnEntryFn != nil && len(destinationState.Callbacks.OnEntryFn) > 0 {
 		for _, fn := range destinationState.Callbacks.OnEntryFn {
@@ -178,7 +177,7 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 		}
 	}
 
-	callSideEffects(plinko.AfterStateEntry, psm.pd.SideEffects, payload, td)
+	callSideEffects(plinko.AfterTransition, psm.pd.SideEffects, payload, td)
 
 	return payload, nil
 }
@@ -197,14 +196,12 @@ func callSideEffects(stateAction plinko.StateAction, sideEffects []sideEffectDef
 
 func getFilterDefinition(stateAction plinko.StateAction) plinko.SideEffectFilter {
 	switch stateAction {
-	case plinko.BeforeStateExit:
-		return plinko.AllowBeforeStateExit
-	case plinko.AfterStateExit:
-		return plinko.AllowAfterStateExit
-	case plinko.BeforeStateEntry:
-		return plinko.AllowBeforeStateEntry
-	case plinko.AfterStateEntry:
-		return plinko.AllowAfterStateEntry
+	case plinko.BeforeTransition:
+		return plinko.AllowBeforeTransition
+	case plinko.BetweenStates:
+		return plinko.AllowBetweenStates
+	case plinko.AfterTransition:
+		return plinko.AllowAfterTransition
 	}
 
 	return 0
@@ -262,7 +259,7 @@ func (pd PlinkoDefinition) RenderUml() (plinko.Uml, error) {
 }
 
 // this is a convenience constant for registering a global
-const allowAllSideEffects = plinko.AllowAfterStateEntry | plinko.AllowAfterStateExit | plinko.AllowBeforeStateEntry | plinko.AllowBeforeStateExit
+const allowAllSideEffects = plinko.AllowBeforeTransition | plinko.AllowAfterTransition | plinko.AllowBetweenStates
 
 func (pd *PlinkoDefinition) SideEffect(sideEffect plinko.SideEffect) plinko.PlinkoDefinition {
 	pd.SideEffects = append(pd.SideEffects, sideEffectDefinition{Filter: allowAllSideEffects, SideEffect: sideEffect})
