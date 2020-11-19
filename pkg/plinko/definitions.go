@@ -3,13 +3,16 @@ package plinko
 type State string
 type Trigger string
 
-type CallbackDefinitions struct {
-	OnEntryFn []chainedFunctionCall
-	OnExitFn  func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
-
-	EntryFunctionChain []string
-	ExitFunctionChain  []string
+type StateDefinition interface {
+	//State() string
+	OnEntry(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
+	OnTriggerEntry(Trigger, func(Payload, TransitionInfo) (Payload, error)) StateDefinition
+	OnExit(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
+	Permit(Trigger, State) StateDefinition
+	PermitIf(func(Payload, TransitionInfo) bool, Trigger, State) StateDefinition
+	//TBD: AllowReentrance by request, not default
 }
+
 type StateMachine interface {
 	Fire(payload Payload, trigger Trigger) (Payload, error)
 	CanFire(payload Payload, trigger Trigger) bool
@@ -32,16 +35,6 @@ type PlinkoDefinition interface {
 	RenderUml() (Uml, error)
 }
 
-type StateDefinition interface {
-	//State() string
-	OnEntry(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
-	OnTriggerEntry(Trigger, func(Payload, TransitionInfo) (Payload, error)) StateDefinition
-	OnExit(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
-	Permit(Trigger, State) StateDefinition
-	PermitIf(func(Payload, TransitionInfo) bool, Trigger, State) StateDefinition
-	//TBD: AllowReentrance by request, not default
-}
-
 type Payload interface {
 	GetState() State
 }
@@ -62,17 +55,22 @@ const (
 type StateAction string
 
 const (
-	BeforeStateExit  StateAction = "BeforeStateExit"
-	AfterStateExit   StateAction = "AfterStateExit"
-	BeforeStateEntry StateAction = "BeforeStateEntry"
-	AfterStateEntry  StateAction = "AfterStateEntry"
+	BeforeTransition StateAction = "BeforeStateExit"
+	BetweenStates    StateAction = "AfterStateExit"
+	AfterTransition  StateAction = "BeforeStateEntry"
 )
 
 type SideEffectFilter int
 
 const (
-	AllowBeforeStateExit  SideEffectFilter = 1
-	AllowAfterStateExit   SideEffectFilter = 2
-	AllowBeforeStateEntry SideEffectFilter = 4
-	AllowAfterStateEntry  SideEffectFilter = 8
+	AllowBeforeTransition SideEffectFilter = 1
+	AllowBetweenStates    SideEffectFilter = 2
+	AllowAfterTransition  SideEffectFilter = 4
 )
+
+type Uml string
+
+type CompilerOutput struct {
+	StateMachine StateMachine
+	Messages     []CompilerMessage
+}
