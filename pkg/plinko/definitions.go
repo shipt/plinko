@@ -52,14 +52,6 @@ const (
 	// CompileInfo CompilerReportType "Compile Info"
 )
 
-type CallbackDefinitions struct {
-	OnEntryFn []chainedFunctionCall
-	OnExitFn  func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
-
-	EntryFunctionChain []string
-	ExitFunctionChain  []string
-}
-
 type StateAction string
 
 const (
@@ -83,24 +75,4 @@ type Uml string
 type CompilerOutput struct {
 	StateMachine StateMachine
 	Messages     []CompilerMessage
-}
-
-type plinkoStateMachine struct {
-	pd plinkoDefinition
-}
-
-type chainedFunctionCall struct {
-	Predicate func(pp Payload, transitionInfo TransitionInfo) bool
-	Operation func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
-}
-
-func CreateDefinition() PlinkoDefinition {
-	stateMap := make(map[State]*stateDefinition)
-	plinko := plinkoDefinition{
-		States: &stateMap,
-	}
-
-	plinko.abs = abstractSyntax{}
-
-	return &plinko
 }
