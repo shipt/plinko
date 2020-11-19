@@ -1,4 +1,4 @@
-package plinko
+package config
 
 import (
 	"fmt"
