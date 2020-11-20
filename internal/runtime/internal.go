@@ -14,7 +14,7 @@ type plinkoStateMachine struct {
 	pd PlinkoDefinition
 }
 
-type StateDefinition struct {
+type InternalStateDefinition struct {
 	State    plinko.State
 	Triggers map[plinko.Trigger]*TriggerDefinition
 
@@ -23,14 +23,14 @@ type StateDefinition struct {
 	Abs *AbstractSyntax
 }
 
-func (sd StateDefinition) OnEntry(entryFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
+func (sd InternalStateDefinition) OnEntry(entryFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
 	sd.Callbacks.AddEntry(nil, entryFn)
 
 	return sd
 
 }
 
-func (sd StateDefinition) OnTriggerEntry(trigger plinko.Trigger, entryFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
+func (sd InternalStateDefinition) OnTriggerEntry(trigger plinko.Trigger, entryFn plinko.Operation) plinko.StateDefinition {
 	sd.Callbacks.AddEntry(func(_ plinko.Payload, t plinko.TransitionInfo) bool {
 		return t.GetTrigger() == trigger
 	}, entryFn)
@@ -39,20 +39,20 @@ func (sd StateDefinition) OnTriggerEntry(trigger plinko.Trigger, entryFn func(pp
 
 }
 
-func (sd StateDefinition) OnExit(exitFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
+func (sd InternalStateDefinition) OnExit(exitFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
 	sd.Callbacks.OnExitFn = exitFn
 	sd.Callbacks.ExitFunctionChain = append(sd.Callbacks.ExitFunctionChain, getFunctionName(exitFn))
 
 	return sd
 }
 
-func (sd StateDefinition) Permit(trigger plinko.Trigger, destinationState plinko.State) plinko.StateDefinition {
+func (sd InternalStateDefinition) Permit(trigger plinko.Trigger, destinationState plinko.State) plinko.StateDefinition {
 	addPermit(&sd, trigger, destinationState, nil)
 
 	return sd
 }
 
-func (sd StateDefinition) PermitIf(predicate func(plinko.Payload, plinko.TransitionInfo) bool, trigger plinko.Trigger, destinationState plinko.State) plinko.StateDefinition {
+func (sd InternalStateDefinition) PermitIf(predicate plinko.Predicate, trigger plinko.Trigger, destinationState plinko.State) plinko.StateDefinition {
 	addPermit(&sd, trigger, destinationState, predicate)
 
 	return sd
@@ -152,11 +152,11 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 type AbstractSyntax struct {
 	States             []plinko.State
 	TriggerDefinitions []TriggerDefinition
-	StateDefinitions   []*StateDefinition
+	StateDefinitions   []*InternalStateDefinition
 }
 
 type PlinkoDefinition struct {
-	States      *map[plinko.State]*StateDefinition
+	States      *map[plinko.State]*InternalStateDefinition
 	SideEffects []sideeffects.SideEffectDefinition
 	Abs         AbstractSyntax
 }
@@ -248,7 +248,7 @@ func (pd *PlinkoDefinition) Configure(state plinko.State) plinko.StateDefinition
 
 	cbd := composition.CallbackDefinitions{}
 
-	sd := StateDefinition{
+	sd := InternalStateDefinition{
 		State:     state,
 		Triggers:  make(map[plinko.Trigger]*TriggerDefinition),
 		Abs:       &pd.Abs,
@@ -280,7 +280,7 @@ func getFunctionName(i interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }
 
-func addPermit(sd *StateDefinition, trigger plinko.Trigger, destination plinko.State, predicate func(plinko.Payload, plinko.TransitionInfo) bool) {
+func addPermit(sd *InternalStateDefinition, trigger plinko.Trigger, destination plinko.State, predicate func(plinko.Payload, plinko.TransitionInfo) bool) {
 	if _, ok := sd.Triggers[trigger]; ok {
 		panic(fmt.Sprintf("Trigger: %s - has already been defined, plinko configuration invalid.", trigger))
 	}
