@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"runtime"
 
+	"github.com/shipt/plinko/internal/sideeffects"
 	"github.com/shipt/plinko/pkg/plinko"
 )
 
@@ -73,24 +74,6 @@ func (sd StateDefinition) PermitIf(predicate func(plinko.Payload, plinko.Transit
 	return sd
 }
 
-type transitionDef struct {
-	source      plinko.State
-	destination plinko.State
-	trigger     plinko.Trigger
-}
-
-func (td transitionDef) GetSource() plinko.State {
-	return td.source
-}
-
-func (td transitionDef) GetDestination() plinko.State {
-	return td.destination
-}
-
-func (td transitionDef) GetTrigger() plinko.Trigger {
-	return td.trigger
-}
-
 func (psm plinkoStateMachine) EnumerateActiveTriggers(payload plinko.Payload) ([]plinko.Trigger, error) {
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
@@ -122,10 +105,10 @@ func (psm plinkoStateMachine) CanFire(payload plinko.Payload, trigger plinko.Tri
 	}
 
 	if triggerData.Predicate != nil {
-		return triggerData.Predicate(payload, transitionDef{
-			destination: triggerData.DestinationState,
-			source:      state,
-			trigger:     triggerData.Name,
+		return triggerData.Predicate(payload, sideeffects.TransitionDef{
+			Destination: triggerData.DestinationState,
+			Source:      state,
+			Trigger:     triggerData.Name,
 		})
 	}
 
@@ -147,19 +130,19 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 
 	destinationState := (*psm.pd.States)[triggerData.DestinationState]
 
-	td := transitionDef{
-		source:      state,
-		destination: destinationState.State,
-		trigger:     trigger,
+	td := sideeffects.TransitionDef{
+		Source:      state,
+		Destination: destinationState.State,
+		Trigger:     trigger,
 	}
 
-	callSideEffects(plinko.BeforeTransition, psm.pd.SideEffects, payload, td)
+	sideeffects.Dispatch(plinko.BeforeTransition, psm.pd.SideEffects, payload, td)
 
 	if sd2.Callbacks.OnExitFn != nil {
 		sd2.Callbacks.OnExitFn(payload, td)
 	}
 
-	callSideEffects(plinko.BetweenStates, psm.pd.SideEffects, payload, td)
+	sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td)
 
 	if destinationState.Callbacks.OnEntryFn != nil && len(destinationState.Callbacks.OnEntryFn) > 0 {
 		for _, fn := range destinationState.Callbacks.OnEntryFn {
@@ -177,34 +160,9 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 		}
 	}
 
-	callSideEffects(plinko.AfterTransition, psm.pd.SideEffects, payload, td)
+	sideeffects.Dispatch(plinko.AfterTransition, psm.pd.SideEffects, payload, td)
 
 	return payload, nil
-}
-
-func callSideEffects(stateAction plinko.StateAction, sideEffects []sideEffectDefinition, payload plinko.Payload, transitionInfo plinko.TransitionInfo) int {
-	iCount := 0
-	for _, sideEffectDefinition := range sideEffects {
-		if sideEffectDefinition.Filter&getFilterDefinition(stateAction) > 0 {
-
-			sideEffectDefinition.SideEffect(stateAction, payload, transitionInfo)
-			iCount++
-		}
-	}
-	return iCount
-}
-
-func getFilterDefinition(stateAction plinko.StateAction) plinko.SideEffectFilter {
-	switch stateAction {
-	case plinko.BeforeTransition:
-		return plinko.AllowBeforeTransition
-	case plinko.BetweenStates:
-		return plinko.AllowBetweenStates
-	case plinko.AfterTransition:
-		return plinko.AllowAfterTransition
-	}
-
-	return 0
 }
 
 type AbstractSyntax struct {
@@ -213,14 +171,9 @@ type AbstractSyntax struct {
 	StateDefinitions   []*StateDefinition
 }
 
-type sideEffectDefinition struct {
-	SideEffect plinko.SideEffect
-	Filter     plinko.SideEffectFilter
-}
-
 type PlinkoDefinition struct {
 	States      *map[plinko.State]*StateDefinition
-	SideEffects []sideEffectDefinition
+	SideEffects []sideeffects.SideEffectDefinition
 	Abs         AbstractSyntax
 }
 
@@ -258,17 +211,14 @@ func (pd PlinkoDefinition) RenderUml() (plinko.Uml, error) {
 	return uml, nil
 }
 
-// this is a convenience constant for registering a global
-const allowAllSideEffects = plinko.AllowBeforeTransition | plinko.AllowAfterTransition | plinko.AllowBetweenStates
-
 func (pd *PlinkoDefinition) SideEffect(sideEffect plinko.SideEffect) plinko.PlinkoDefinition {
-	pd.SideEffects = append(pd.SideEffects, sideEffectDefinition{Filter: allowAllSideEffects, SideEffect: sideEffect})
+	pd.SideEffects = append(pd.SideEffects, sideeffects.SideEffectDefinition{Filter: sideeffects.AllowAllSideEffects, SideEffect: sideEffect})
 
 	return pd
 }
 
 func (pd *PlinkoDefinition) FilteredSideEffect(filter plinko.SideEffectFilter, sideEffect plinko.SideEffect) plinko.PlinkoDefinition {
-	pd.SideEffects = append(pd.SideEffects, sideEffectDefinition{Filter: filter, SideEffect: sideEffect})
+	pd.SideEffects = append(pd.SideEffects, sideeffects.SideEffectDefinition{Filter: filter, SideEffect: sideEffect})
 
 	return pd
 }
