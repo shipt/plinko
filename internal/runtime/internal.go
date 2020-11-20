@@ -5,54 +5,38 @@ import (
 	"reflect"
 	"runtime"
 
+	"github.com/shipt/plinko/internal/composition"
 	"github.com/shipt/plinko/internal/sideeffects"
 	"github.com/shipt/plinko/pkg/plinko"
 )
 
-type CallbackDefinitions struct {
-	OnEntryFn []chainedFunctionCall
-	OnExitFn  func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)
-
-	EntryFunctionChain []string
-	ExitFunctionChain  []string
-}
 type plinkoStateMachine struct {
 	pd PlinkoDefinition
-}
-
-type chainedFunctionCall struct {
-	Predicate func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) bool
-	Operation func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)
 }
 
 type StateDefinition struct {
 	State    plinko.State
 	Triggers map[plinko.Trigger]*TriggerDefinition
 
-	Callbacks *CallbackDefinitions
+	Callbacks *composition.CallbackDefinitions
 
 	Abs *AbstractSyntax
 }
 
 func (sd StateDefinition) OnEntry(entryFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
-	sd.Callbacks.OnEntryFn = append(sd.Callbacks.OnEntryFn, chainedFunctionCall{
-		Predicate: nil,
-		Operation: entryFn,
-	})
-	sd.Callbacks.EntryFunctionChain = append(sd.Callbacks.EntryFunctionChain, getFunctionName(entryFn))
+	sd.Callbacks.AddEntry(nil, entryFn)
 
 	return sd
+
 }
 
 func (sd StateDefinition) OnTriggerEntry(trigger plinko.Trigger, entryFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
-	sd.Callbacks.OnEntryFn = append(sd.Callbacks.OnEntryFn, chainedFunctionCall{
-		Predicate: func(_ plinko.Payload, t plinko.TransitionInfo) bool {
-			return t.GetTrigger() == trigger
-		},
-		Operation: entryFn,
-	})
+	sd.Callbacks.AddEntry(func(_ plinko.Payload, t plinko.TransitionInfo) bool {
+		return t.GetTrigger() == trigger
+	}, entryFn)
 
 	return sd
+
 }
 
 func (sd StateDefinition) OnExit(exitFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
@@ -262,7 +246,7 @@ func (pd *PlinkoDefinition) Configure(state plinko.State) plinko.StateDefinition
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}
 
-	cbd := CallbackDefinitions{}
+	cbd := composition.CallbackDefinitions{}
 
 	sd := StateDefinition{
 		State:     state,

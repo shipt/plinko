@@ -51,8 +51,6 @@ func TestEntryAndExitFunctions(t *testing.T) {
 	assert.NotNil(t, stateDef.Callbacks.OnExitFn)
 	assert.NotNil(t, stateDef.Callbacks.OnEntryFn)
 
-	assert.Equal(t, "github.com/shipt/plinko/pkg/config.entryFunctionForTest", stateDef.Callbacks.EntryFunctionChain[0])
-	assert.Equal(t, "github.com/shipt/plinko/pkg/config.exitFunctionForTest", stateDef.Callbacks.ExitFunctionChain[0])
 }
 
 func TestPlinkoAsInterface(t *testing.T) {
