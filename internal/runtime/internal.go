@@ -23,11 +23,17 @@ type InternalStateDefinition struct {
 	Abs *AbstractSyntax
 }
 
-func (sd InternalStateDefinition) OnEntry(entryFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
+func (sd InternalStateDefinition) OnEntry(entryFn plinko.Operation) plinko.StateDefinition {
 	sd.Callbacks.AddEntry(nil, entryFn)
 
 	return sd
 
+}
+
+func (sd InternalStateDefinition) OnExit(exitFn plinko.Operation) plinko.StateDefinition {
+	sd.Callbacks.AddExit(nil, exitFn)
+
+	return sd
 }
 
 func (sd InternalStateDefinition) OnTriggerEntry(trigger plinko.Trigger, entryFn plinko.Operation) plinko.StateDefinition {
@@ -39,9 +45,10 @@ func (sd InternalStateDefinition) OnTriggerEntry(trigger plinko.Trigger, entryFn
 
 }
 
-func (sd InternalStateDefinition) OnExit(exitFn func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error)) plinko.StateDefinition {
-	sd.Callbacks.OnExitFn = exitFn
-	sd.Callbacks.ExitFunctionChain = append(sd.Callbacks.ExitFunctionChain, getFunctionName(exitFn))
+func (sd InternalStateDefinition) OnTriggerExit(trigger plinko.Trigger, exitFn plinko.Operation) plinko.StateDefinition {
+	sd.Callbacks.AddExit(func(_ plinko.Payload, t plinko.TransitionInfo) bool {
+		return t.GetTrigger() == trigger
+	}, exitFn)
 
 	return sd
 }
@@ -122,27 +129,11 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 
 	sideeffects.Dispatch(plinko.BeforeTransition, psm.pd.SideEffects, payload, td)
 
-	if sd2.Callbacks.OnExitFn != nil {
-		sd2.Callbacks.OnExitFn(payload, td)
-	}
+	sd2.Callbacks.ExecuteExitChain(payload, td)
 
 	sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td)
 
-	if destinationState.Callbacks.OnEntryFn != nil && len(destinationState.Callbacks.OnEntryFn) > 0 {
-		for _, fn := range destinationState.Callbacks.OnEntryFn {
-			if fn.Predicate != nil {
-				if !fn.Predicate(payload, td) {
-					continue
-				}
-			}
-
-			payload, e := fn.Operation(payload, td)
-
-			if e != nil {
-				return payload, e
-			}
-		}
-	}
+	destinationState.Callbacks.ExecuteEntryChain(payload, td)
 
 	sideeffects.Dispatch(plinko.AfterTransition, psm.pd.SideEffects, payload, td)
 

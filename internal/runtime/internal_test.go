@@ -12,7 +12,7 @@ const (
 )
 
 func TestStateDefinition(t *testing.T) {
-	state := StateDefinition{
+	state := InternalStateDefinition{
 		State:    "NewOrder",
 		Triggers: make(map[plinko.Trigger]*TriggerDefinition),
 	}

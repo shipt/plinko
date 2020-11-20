@@ -8,9 +8,10 @@ type Operation func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
 
 type StateDefinition interface {
 	//State() string
-	OnEntry(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
+	OnEntry(Operation) StateDefinition
 	OnTriggerEntry(Trigger, Operation) StateDefinition
-	OnExit(func(Payload, TransitionInfo) (Payload, error)) StateDefinition
+	OnExit(Operation) StateDefinition
+	OnTriggerExit(Trigger, Operation) StateDefinition
 	Permit(Trigger, State) StateDefinition
 	PermitIf(Predicate, Trigger, State) StateDefinition
 	//TBD: AllowReentrance by request, not default

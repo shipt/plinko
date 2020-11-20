@@ -39,7 +39,7 @@ func TestEntryAndExitFunctions(t *testing.T) {
 	p := CreateDefinition()
 	ps := p.Configure("NewOrder")
 
-	stateDef := ps.(runtime.StateDefinition)
+	stateDef := ps.(runtime.InternalStateDefinition)
 	assert.Nil(t, stateDef.Callbacks.OnExitFn)
 	assert.Nil(t, stateDef.Callbacks.OnEntryFn)
 
@@ -47,7 +47,7 @@ func TestEntryAndExitFunctions(t *testing.T) {
 
 	ps = ps.OnExit(exitFunctionForTest)
 
-	stateDef = ps.(runtime.StateDefinition)
+	stateDef = ps.(runtime.InternalStateDefinition)
 	assert.NotNil(t, stateDef.Callbacks.OnExitFn)
 	assert.NotNil(t, stateDef.Callbacks.OnEntryFn)
 
@@ -111,7 +111,7 @@ func TestUmlDiagramming(t *testing.T) {
 }
 
 func TestPlinkoDefinition(t *testing.T) {
-	stateMap := make(map[plinko.State]*runtime.StateDefinition)
+	stateMap := make(map[plinko.State]*runtime.InternalStateDefinition)
 	plinko := runtime.PlinkoDefinition{
 		States: &stateMap,
 	}
