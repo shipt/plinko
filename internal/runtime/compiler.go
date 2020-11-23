@@ -6,6 +6,8 @@ import (
 	"github.com/shipt/plinko/pkg/plinko"
 )
 
+// Compile ... is performed after the definition has been completed and generates a list of errors/warnings and the runnable state machine
+// if the definition is error free.
 func (pd PlinkoDefinition) Compile() plinko.CompilerOutput {
 
 	var compilerMessages []plinko.CompilerMessage
