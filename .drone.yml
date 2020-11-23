@@ -1,0 +1,30 @@
+kind: pipeline
+name: test
+
+trigger:
+  event:
+    - push
+    - pull_request
+    - tag
+
+workspace:
+  base: /go
+  path: src/github.com/shipt/${DRONE_REPO_NAME}
+
+steps:
+  - name: wait
+    image: golang:1.15
+    commands:
+      - sleep 1
+
+  - name: test
+    image: golang:1.15
+    commands:
+      - go test -v ./...
+
+  - name: codecov
+    image: plugins/codecov
+    environment:
+      CODECOV_TOKEN:
+        from_secret: CODECOV_TOKEN
+    files: coverage.txt
