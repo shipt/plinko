@@ -27,7 +27,10 @@ func (sd InternalStateDefinition) OnEntry(entryFn plinko.Operation) plinko.State
 	sd.Callbacks.AddEntry(nil, entryFn)
 
 	return sd
+}
 
+func (sd InternalStateDefinition) OnError(errorFn plinko.ErrorOperation) plinko.StateDefinition {
+	return sd
 }
 
 func (sd InternalStateDefinition) OnExit(exitFn plinko.Operation) plinko.StateDefinition {
