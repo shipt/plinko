@@ -45,7 +45,7 @@ func (td TransitionDef) GetDestination() plinko.State {
 // SetDestination ...
 // sets the destination state, this method is only exposed when ModifiableTransitionInfo
 // is referenced.
-func (td TransitionDef) SetDestination(state plinko.State) {
+func (td *TransitionDef) SetDestination(state plinko.State) {
 	td.Destination = state
 }
 
