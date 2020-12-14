@@ -5,7 +5,7 @@ type Trigger string
 
 type Predicate func(Payload, TransitionInfo) bool
 type Operation func(Payload, TransitionInfo) (Payload, error)
-type ErrorOperation func(Payload, TransitionInfo, error) (Payload, TransitionInfo, error)
+type ErrorOperation func(Payload, ModifiableTransitionInfo, error) (Payload, ModifiableTransitionInfo, error)
 
 type StateDefinition interface {
 	//State() string
@@ -29,6 +29,13 @@ type TransitionInfo interface {
 	GetSource() State
 	GetDestination() State
 	GetTrigger() Trigger
+}
+
+type ModifiableTransitionInfo interface {
+	GetSource() State
+	GetDestination() State
+	GetTrigger() Trigger
+	SetDestination(State)
 }
 
 type SideEffect func(StateAction, Payload, TransitionInfo)

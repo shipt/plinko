@@ -63,21 +63,48 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 
 	destinationState := (*psm.pd.States)[triggerData.DestinationState]
 
-	td := sideeffects.TransitionDef{
+	td := &sideeffects.TransitionDef{
 		Source:      state,
 		Destination: destinationState.State,
 		Trigger:     trigger,
 	}
 
+	defer sideeffects.Dispatch(plinko.AfterTransition, psm.pd.SideEffects, payload, td)
+
 	sideeffects.Dispatch(plinko.BeforeTransition, psm.pd.SideEffects, payload, td)
 
-	sd2.Callbacks.ExecuteExitChain(payload, td)
+	payload, err := sd2.Callbacks.ExecuteExitChain(payload, td)
+
+	if err != nil {
+		payload, td, errSub := sd2.Callbacks.ExecuteErrorChain(payload, td, err)
+
+		if errSub != nil {
+			// this ensures that the error condition is trapped and not overriden to the caller of the trigger function
+			err = errSub
+		}
+		sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td)
+		return payload, err
+	}
 
 	sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td)
 
-	destinationState.Callbacks.ExecuteEntryChain(payload, td)
+	payload, err = destinationState.Callbacks.ExecuteEntryChain(payload, td)
+	if err != nil {
+		var errSub error
 
-	sideeffects.Dispatch(plinko.AfterTransition, psm.pd.SideEffects, payload, td)
+		payload, mtd, errSub := destinationState.Callbacks.ExecuteErrorChain(payload, td, err)
+		td = &sideeffects.TransitionDef{
+			Source:      mtd.GetSource(),
+			Destination: mtd.GetDestination(),
+			Trigger:     mtd.GetTrigger(),
+		}
+
+		if errSub != nil {
+			err = errSub
+		}
+
+		return payload, err
+	}
 
 	return payload, nil
 }
