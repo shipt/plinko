@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -351,4 +352,58 @@ func TestEnumerateTriggers(t *testing.T) {
 	triggers, err = psm.EnumerateActiveTriggers(payload)
 
 	assert.NotNil(t, err)
+}
+
+func ErroringStep(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+	return pp, errors.New("not-wizard")
+}
+
+func ErrorHandler(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+	m.SetDestination("RejectedOrder")
+
+	return p, nil
+}
+func TestStateMachineErrorHandling(t *testing.T) {
+	const RejectedOrder plinko.State = "RejectedOrder"
+	p := CreateDefinition()
+
+	p.Configure(NewOrder).
+		OnEntry(OnNewOrderEntry).
+		Permit("Submit", "PublishedOrder").
+		Permit("Review", "UnderReview")
+
+	p.Configure("PublishedOrder").
+		OnEntry(ErroringStep).
+		OnError(ErrorHandler).
+		Permit("Submit", NewOrder)
+
+	p.Configure("UnderReview").
+		Permit("CompleteReview", "PublishedOrder").
+		Permit("RejectOrder", RejectedOrder)
+
+	p.Configure(RejectedOrder)
+
+	transitionVisitCount := 0
+	var transitionInfo plinko.TransitionInfo
+	transitionInfo = nil
+	p.SideEffect(func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo) {
+		transitionInfo = ti
+		transitionVisitCount++
+	})
+
+	compilerOutput := p.Compile()
+	psm := compilerOutput.StateMachine
+
+	payload := testPayload{state: NewOrder}
+
+	p1, e := psm.Fire(payload, "Submit")
+
+	assert.NotNil(t, transitionInfo)
+	assert.NotNil(t, p1)
+	assert.NotNil(t, e)
+	assert.Equal(t, RejectedOrder, transitionInfo.GetDestination())
+	assert.Equal(t, errors.New("not-wizard"), e)
+
+	assert.Equal(t, 3, transitionVisitCount)
+
 }

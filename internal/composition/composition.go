@@ -76,10 +76,10 @@ func executeChain(funcs []ChainedFunctionCall, p plinko.Payload, t plinko.Transi
 func executeErrorChain(funcs []ChainedErrorCall, p plinko.Payload, t *sideeffects.TransitionDef, err error) (plinko.Payload, *sideeffects.TransitionDef, error) {
 	if funcs != nil && len(funcs) > 0 {
 		for _, fn := range funcs {
-			p, t1, e := fn.ErrorOperation(p, t, err)
+			p, e := fn.ErrorOperation(p, t, err)
 
 			if e != nil {
-				return p, t1.(*sideeffects.TransitionDef), e
+				return p, t, e
 			}
 		}
 	}

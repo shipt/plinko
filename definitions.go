@@ -5,7 +5,7 @@ type Trigger string
 
 type Predicate func(Payload, TransitionInfo) bool
 type Operation func(Payload, TransitionInfo) (Payload, error)
-type ErrorOperation func(Payload, ModifiableTransitionInfo, error) (Payload, ModifiableTransitionInfo, error)
+type ErrorOperation func(Payload, ModifiableTransitionInfo, error) (Payload, error)
 
 type StateDefinition interface {
 	//State() string
