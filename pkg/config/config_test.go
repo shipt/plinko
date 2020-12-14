@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/runtime"
-	"github.com/shipt/plinko/pkg/plinko"
 	"github.com/stretchr/testify/assert"
 )
 
