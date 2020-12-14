@@ -40,9 +40,9 @@ func TestExecuteErrorChainSingleFunctionWithModifiedDestination(t *testing.T) {
 	}
 	list := []ChainedErrorCall{
 		ChainedErrorCall{
-			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, plinko.ModifiableTransitionInfo, error) {
+			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 				m.SetDestination(ErrorState)
-				return p, m, nil
+				return p, nil
 			},
 		},
 	}
@@ -67,16 +67,16 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 	counter := 0
 	list := []ChainedErrorCall{
 		ChainedErrorCall{
-			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, plinko.ModifiableTransitionInfo, error) {
+			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 				counter++
-				return p, m, errors.New("notwizard")
+				return p, errors.New("notwizard")
 			},
 		},
 		ChainedErrorCall{
-			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, plinko.ModifiableTransitionInfo, error) {
+			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 				m.SetDestination(ErrorState)
 				counter++
-				return p, m, nil
+				return p, nil
 			},
 		},
 	}
