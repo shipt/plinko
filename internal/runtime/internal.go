@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"runtime"
 
+	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/composition"
 	"github.com/shipt/plinko/internal/sideeffects"
-	"github.com/shipt/plinko/pkg/plinko"
 )
 
 type plinkoStateMachine struct {

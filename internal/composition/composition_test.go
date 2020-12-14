@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/bmizerany/assert"
-	"github.com/shipt/plinko/pkg/plinko"
+	"github.com/shipt/plinko"
 )
 
 func TestAddEntry(t *testing.T) {

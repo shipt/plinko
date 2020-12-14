@@ -3,8 +3,8 @@ package runtime
 import (
 	"fmt"
 
+	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/sideeffects"
-	"github.com/shipt/plinko/pkg/plinko"
 )
 
 func (psm plinkoStateMachine) EnumerateActiveTriggers(payload plinko.Payload) ([]plinko.Trigger, error) {

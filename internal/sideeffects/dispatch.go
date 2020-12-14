@@ -1,6 +1,6 @@
 package sideeffects
 
-import "github.com/shipt/plinko/pkg/plinko"
+import "github.com/shipt/plinko"
 
 // AllowAllSideEffects is a convenience constant for registering a global
 const AllowAllSideEffects = plinko.AllowBeforeTransition | plinko.AllowAfterTransition | plinko.AllowBetweenStates

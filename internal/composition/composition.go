@@ -1,6 +1,6 @@
 package composition
 
-import "github.com/shipt/plinko/pkg/plinko"
+import "github.com/shipt/plinko"
 
 type ChainedFunctionCall struct {
 	Predicate plinko.Predicate
