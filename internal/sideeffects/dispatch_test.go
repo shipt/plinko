@@ -3,7 +3,7 @@ package sideeffects
 import (
 	"testing"
 
-	"github.com/shipt/plinko/pkg/plinko"
+	"github.com/shipt/plinko"
 	"github.com/stretchr/testify/assert"
 )
 

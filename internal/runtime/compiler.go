@@ -3,7 +3,7 @@ package runtime
 import (
 	"fmt"
 
-	"github.com/shipt/plinko/pkg/plinko"
+	"github.com/shipt/plinko"
 )
 
 func (pd PlinkoDefinition) Compile() plinko.CompilerOutput {

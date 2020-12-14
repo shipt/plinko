@@ -3,8 +3,9 @@ package plinko
 type State string
 type Trigger string
 
-type Predicate func(pp Payload, transitionInfo TransitionInfo) bool
-type Operation func(pp Payload, transitionInfo TransitionInfo) (Payload, error)
+type Predicate func(Payload, TransitionInfo) bool
+type Operation func(Payload, TransitionInfo) (Payload, error)
+type ErrorOperation func(Payload, ModifiableTransitionInfo, error) (Payload, error)
 
 type StateDefinition interface {
 	//State() string
@@ -14,6 +15,7 @@ type StateDefinition interface {
 	OnTriggerExit(Trigger, Operation) StateDefinition
 	Permit(Trigger, State) StateDefinition
 	PermitIf(Predicate, Trigger, State) StateDefinition
+	OnError(ErrorOperation) StateDefinition
 	//TBD: AllowReentrance by request, not default
 }
 
@@ -27,6 +29,13 @@ type TransitionInfo interface {
 	GetSource() State
 	GetDestination() State
 	GetTrigger() Trigger
+}
+
+type ModifiableTransitionInfo interface {
+	GetSource() State
+	GetDestination() State
+	GetTrigger() Trigger
+	SetDestination(State)
 }
 
 type SideEffect func(StateAction, Payload, TransitionInfo)

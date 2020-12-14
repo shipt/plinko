@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"runtime"
 
+	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/composition"
 	"github.com/shipt/plinko/internal/sideeffects"
-	"github.com/shipt/plinko/pkg/plinko"
 )
 
 type plinkoStateMachine struct {
@@ -27,7 +27,11 @@ func (sd InternalStateDefinition) OnEntry(entryFn plinko.Operation) plinko.State
 	sd.Callbacks.AddEntry(nil, entryFn)
 
 	return sd
+}
 
+func (sd InternalStateDefinition) OnError(errorFn plinko.ErrorOperation) plinko.StateDefinition {
+	sd.Callbacks.AddError(errorFn)
+	return sd
 }
 
 func (sd InternalStateDefinition) OnExit(exitFn plinko.Operation) plinko.StateDefinition {

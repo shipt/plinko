@@ -1,6 +1,6 @@
 package sideeffects
 
-import "github.com/shipt/plinko/pkg/plinko"
+import "github.com/shipt/plinko"
 
 // AllowAllSideEffects is a convenience constant for registering a global
 const AllowAllSideEffects = plinko.AllowBeforeTransition | plinko.AllowAfterTransition | plinko.AllowBetweenStates
@@ -40,6 +40,13 @@ func (td TransitionDef) GetSource() plinko.State {
 // GetDestination returns the Destination State that's part of the process being executed.
 func (td TransitionDef) GetDestination() plinko.State {
 	return td.Destination
+}
+
+// SetDestination ...
+// sets the destination state, this method is only exposed when ModifiableTransitionInfo
+// is referenced.
+func (td *TransitionDef) SetDestination(state plinko.State) {
+	td.Destination = state
 }
 
 // GetTrigger returns the Trigger used to launch the transition
