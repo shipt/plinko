@@ -263,9 +263,9 @@ func MetricsRecording(action StateAction, payload Payload, transitionInfo Transi
 
 ## Error Handling
 
-State Machine error handling follows the same pattern that we see in golang in general, when an error occurs that cannot be rectified and causes the state change to fail, an error is raised from the function.   Plinko redirects the flow to the `OnError` definition for remediation. An error in this situation can mean that a Payloads state is moved to something other than the original destination.  Depending on the system, this might be mean it goes back to an old state, continues on to the new state or it lands in a _triage_ state.  Equally important is that this information can be recorded reliably with the Side-Effect support documented above.  Plinko ensure the ability to adjust the destination state and make that consistent with SideEffects.
+State Machine error handling follows the same pattern that we see in golang in general, when an error occurs that cannot be rectified and causes the state change to fail, an error is raised from the function.   Plinko redirects the flow to the `OnError` definition for remediation. An error in this situation can mean that a Payloads state is moved to something other than the original destination.  Depending on the system, this might be mean it goes back to an old state, continues on to the new state or it lands in a _triage_ state.  Equally important is that this information can be recorded reliably with the Side-Effect support documented above.  Plinko ensures the ability to adjust the destination state and make that consistent with SideEffects.
 
-While the `OnEntry` and `OnExit` function definitions take a `TransitionInfo` parameter that is immutable, and error operation is defined with a `ModifiableTransitionInfo` interface that allows the function to change the `DestinationState`.  In addition, the function also accepts the error raised during the `On[Entry|Exit]` operation so it can be interrogated when necessary.  The definition of error operation looks like this:
+While the `OnEntry` and `OnExit` function definitions take a `TransitionInfo` parameter that is immutable, and error operation is defined with a `ModifiableTransitionInfo` interface that allows the function to change the `DestinationState`.  In addition, the function also accepts the error raised during the `On[Entry|Exit]` operation so it can be interrogated when necessary.  The definition of an error operation handler looks like this:
 
 ```golang
  ErrorOperation func(Payload, ModifiableTransitionInfo, error) (Payload, error)
@@ -275,7 +275,7 @@ An ErrorOperation function implements this signature and tests the error case.  
 
 ```golang
 func RedirectOnDeactivatedCustomer(p Payload, m ModifiableTransitionInfo, e error) (Payload, error) {
-	if e == DeactivateCustomerError {
+	if e == DeactivatedCustomerError {
 		m.SetDestination(DeactivatedTriage)
 		return RecordOrder(p, m)
 	}
@@ -287,7 +287,7 @@ func RedirectOnDeactivatedCustomer(p Payload, m ModifiableTransitionInfo, e erro
 
 There are a couple things to note.   If you return a non-nil `error` during an `OnError` routine, this is regarded as a fatal error that is floated to the caller who initiated the `.Fire(..)` command.  This condition is floated to the registered SideEffect handlers as well.
 
-Some key pieces to remember when building up a set of error handlers.    First, you don't have to handle _every_ error case.  This is done by returning `(payload, nil)`) to the caller.  Plinko will call any subsequent error handlers in this case to give each handler an opportunity to perform it's role in the set of operations.  This is powerful, as handlers can take on different aspects of error handling, including custom messaging and metrics. This allos these functions to be simple, focused operations that compose a larger set of responsiblities (through additiona functions) when an error occurs.
+Some key pieces to remember when building up a set of error handlers.    First, you don't have to handle _every_ error case.  This is done by returning `(payload, nil)`) to the caller.  Plinko will call any subsequent error handlers in this case to give each handler an opportunity to perform it's role in the set of operations.  This is powerful, as handlers can take on different aspects of error handling, including custom messaging and metrics. This allows these functions to be simple, focused operations that compose a larger set of responsiblities (through additional functions) when an error occurs.
 
 Lastly, here is a sample plinko configuration that uses error handling to perform the proper state destination redirect shown above when an order transitions to `Opened` and the user has been deactivated.  Note the separation of concerns - one to perform the redirect and save state, and the other to perform a system notification.
 
@@ -306,7 +306,7 @@ p.Configure(Opened).
 ```
 
 
-## State Machine documentation
+## State Machine self-documentation
 The fsm can document itself upon a successful compile - emitting PlantUML which can, in turn, be rendered into a state diagram:
 
 ```go
