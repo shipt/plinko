@@ -37,7 +37,7 @@ func exitFunctionForTest(pp plinko.Payload, transitionInfo plinko.TransitionInfo
 }
 
 func TestEntryAndExitFunctions(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 	ps := p.Configure("NewOrder")
 
 	stateDef := ps.(runtime.InternalStateDefinition)
@@ -55,7 +55,7 @@ func TestEntryAndExitFunctions(t *testing.T) {
 }
 
 func TestPlinkoAsInterface(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure("NewOrder").
 		Permit("Submit", "PublishedOrder").
@@ -63,7 +63,7 @@ func TestPlinkoAsInterface(t *testing.T) {
 }
 
 func TestUndefinedStateCompile(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure(NewOrder).
 		Permit("Submit", "PublishedOrder")
@@ -75,7 +75,7 @@ func TestUndefinedStateCompile(t *testing.T) {
 }
 
 func TestTriggerlessStateCompile(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure(NewOrder).
 		Permit("Submit", "PublishedOrder")
@@ -88,7 +88,7 @@ func TestTriggerlessStateCompile(t *testing.T) {
 }
 
 func TestUmlDiagramming(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure(NewOrder).
 		Permit("Submit", "PublishedOrder").
@@ -150,7 +150,7 @@ func (p testPayload) GetState() plinko.State {
 
 func TestOnEntryTriggerOperation(t *testing.T) {
 
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 	counter := 0
 
 	p.Configure(NewOrder).
@@ -186,7 +186,7 @@ func OnNewOrderEntry(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (p
 	return pp, nil
 }
 func TestStateMachine(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure(NewOrder).
 		OnEntry(OnNewOrderEntry).
@@ -220,7 +220,7 @@ func TestStateMachine(t *testing.T) {
 }
 
 func TestCanFire(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure(Created).
 		Permit(Open, Opened)
@@ -244,7 +244,7 @@ func PermitIfPredicate(p plinko.Payload, t plinko.TransitionInfo) bool {
 }
 
 func TestCanFireWithPermitIf(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure(Created).
 		PermitIf(PermitIfPredicate, Open, Opened)
@@ -267,7 +267,7 @@ func TestCanFireWithPermitIf(t *testing.T) {
 }
 
 func TestDiagramming(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure(Created).
 		OnEntry(OnNewOrderEntry).
@@ -321,7 +321,7 @@ func findTrigger(triggers []plinko.Trigger, trigger plinko.Trigger) bool {
 }
 
 func TestEnumerateTriggers(t *testing.T) {
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure(Created).
 		Permit(Open, Opened).
@@ -365,7 +365,7 @@ func ErrorHandler(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) 
 }
 func TestStateMachineErrorHandling(t *testing.T) {
 	const RejectedOrder plinko.State = "RejectedOrder"
-	p := CreateDefinition()
+	p := CreatePlinkoDefinition()
 
 	p.Configure(NewOrder).
 		OnEntry(OnNewOrderEntry).
