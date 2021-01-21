@@ -71,8 +71,6 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 		Trigger:     trigger,
 	}
 
-	defer sideeffects.Dispatch(plinko.AfterTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
-
 	sideeffects.Dispatch(plinko.BeforeTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 
 	payload, err := sd2.Callbacks.ExecuteExitChain(payload, td)
@@ -107,6 +105,8 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 
 		return payload, err
 	}
+
+	sideeffects.Dispatch(plinko.AfterTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 
 	return payload, nil
 }
