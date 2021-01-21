@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/sideeffects"
@@ -49,6 +50,7 @@ func (psm plinkoStateMachine) CanFire(payload plinko.Payload, trigger plinko.Tri
 }
 
 func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigger) (plinko.Payload, error) {
+	start := time.Now()
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
 
@@ -69,30 +71,30 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 		Trigger:     trigger,
 	}
 
-	defer sideeffects.Dispatch(plinko.AfterTransition, psm.pd.SideEffects, payload, td)
+	defer sideeffects.Dispatch(plinko.AfterTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 
-	sideeffects.Dispatch(plinko.BeforeTransition, psm.pd.SideEffects, payload, td)
+	sideeffects.Dispatch(plinko.BeforeTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 
 	payload, err := sd2.Callbacks.ExecuteExitChain(payload, td)
 
 	if err != nil {
-		payload, td, errSub := sd2.Callbacks.ExecuteErrorChain(payload, td, err)
+		payload, td, errSub := sd2.Callbacks.ExecuteErrorChain(payload, td, err, time.Since(start).Milliseconds())
 
 		if errSub != nil {
 			// this ensures that the error condition is trapped and not overriden to the caller of the trigger function
 			err = errSub
 		}
-		sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td)
+		sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 		return payload, err
 	}
 
-	sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td)
+	sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 
 	payload, err = destinationState.Callbacks.ExecuteEntryChain(payload, td)
 	if err != nil {
 		var errSub error
 
-		payload, mtd, errSub := destinationState.Callbacks.ExecuteErrorChain(payload, td, err)
+		payload, mtd, errSub := destinationState.Callbacks.ExecuteErrorChain(payload, td, err, time.Since(start).Milliseconds())
 		td = &sideeffects.TransitionDef{
 			Source:      mtd.GetSource(),
 			Destination: mtd.GetDestination(),

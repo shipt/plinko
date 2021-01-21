@@ -38,7 +38,7 @@ type ModifiableTransitionInfo interface {
 	SetDestination(State)
 }
 
-type SideEffect func(StateAction, Payload, TransitionInfo)
+type SideEffect func(StateAction, Payload, TransitionInfo, int64)
 
 type PlinkoDefinition interface {
 	Configure(State) StateDefinition

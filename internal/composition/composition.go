@@ -95,7 +95,7 @@ func (cd *CallbackDefinitions) ExecuteEntryChain(p plinko.Payload, t plinko.Tran
 	return executeChain(cd.OnEntryFn, p, t)
 }
 
-func (cd *CallbackDefinitions) ExecuteErrorChain(p plinko.Payload, t *sideeffects.TransitionDef, err error) (plinko.Payload, *sideeffects.TransitionDef, error) {
+func (cd *CallbackDefinitions) ExecuteErrorChain(p plinko.Payload, t *sideeffects.TransitionDef, err error, elapsedMilliseconds int64) (plinko.Payload, *sideeffects.TransitionDef, error) {
 	p, mt, err := executeErrorChain(cd.OnErrorFn, p, t, err)
 
 	return p, mt, err
