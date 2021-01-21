@@ -404,6 +404,6 @@ func TestStateMachineErrorHandling(t *testing.T) {
 	assert.Equal(t, RejectedOrder, transitionInfo.GetDestination())
 	assert.Equal(t, errors.New("not-wizard"), e)
 
-	assert.Equal(t, 3, transitionVisitCount)
+	assert.Equal(t, 2, transitionVisitCount)
 
 }
