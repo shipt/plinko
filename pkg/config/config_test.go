@@ -204,7 +204,7 @@ func TestStateMachine(t *testing.T) {
 	p.Configure("RejectedOrder")
 
 	visitCount := 0
-	p.SideEffect(func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo) {
+	p.SideEffect(func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		visitCount += 1
 	})
 
@@ -386,7 +386,7 @@ func TestStateMachineErrorHandling(t *testing.T) {
 	transitionVisitCount := 0
 	var transitionInfo plinko.TransitionInfo
 	transitionInfo = nil
-	p.SideEffect(func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo) {
+	p.SideEffect(func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		transitionInfo = ti
 		transitionVisitCount++
 	})
@@ -404,6 +404,6 @@ func TestStateMachineErrorHandling(t *testing.T) {
 	assert.Equal(t, RejectedOrder, transitionInfo.GetDestination())
 	assert.Equal(t, errors.New("not-wizard"), e)
 
-	assert.Equal(t, 3, transitionVisitCount)
+	assert.Equal(t, 2, transitionVisitCount)
 
 }

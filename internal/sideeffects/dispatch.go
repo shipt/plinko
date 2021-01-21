@@ -56,12 +56,12 @@ func (td TransitionDef) GetTrigger() plinko.Trigger {
 
 // Dispatch is responsible for executing a set of side effect definitions when called upon.  It is sensitive to the definition
 //   in terms of what is called.
-func Dispatch(stateAction plinko.StateAction, sideEffects []SideEffectDefinition, payload plinko.Payload, transitionInfo plinko.TransitionInfo) int {
+func Dispatch(stateAction plinko.StateAction, sideEffects []SideEffectDefinition, payload plinko.Payload, transitionInfo plinko.TransitionInfo, elapsedMilliseconds int64) int {
 	iCount := 0
 	for _, sideEffectDefinition := range sideEffects {
 		if sideEffectDefinition.Filter&getFilterDefinition(stateAction) > 0 {
 
-			sideEffectDefinition.SideEffect(stateAction, payload, transitionInfo)
+			sideEffectDefinition.SideEffect(stateAction, payload, transitionInfo, elapsedMilliseconds)
 			iCount++
 		}
 	}
