@@ -231,7 +231,7 @@ p.FilteredSideEffect(AfterStateEntry, StateEntryRecording)
 
 In the case above, we registered two functions that get executed whenever a change happens.  These functions will always be called in the order they are registered for a given state transition.
 
-In addition, we registered a FilteredSideEffect that only gets called on the requested action.
+In addition, we registered a FilteredSideEffect that only gets called on the requested action. Filters can be 'or'd' together to get run multiple side effects like so:   `BeforeStateExit | AfterStateEntry`
 
 These are functions that have signature including the starting state, the destination state, the trigger used to kick off the transition and the payload.
 
