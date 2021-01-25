@@ -19,6 +19,9 @@ steps:
 
   - name: test
     image: golang:1.15
+    environment:
+      CODECOV_TOKEN:
+        from_secret: CODECOV_TOKEN
     commands:
       - go test -v ./...
       - ./codecov_metrics.sh   
