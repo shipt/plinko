@@ -6,6 +6,7 @@ import (
 
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/sideeffects"
+	"github.com/shipt/plinko/plinkoerror"
 )
 
 func (psm plinkoStateMachine) EnumerateActiveTriggers(payload plinko.Payload) ([]plinko.Trigger, error) {
@@ -13,7 +14,7 @@ func (psm plinkoStateMachine) EnumerateActiveTriggers(payload plinko.Payload) ([
 	sd2 := (*psm.pd.States)[state]
 
 	if sd2 == nil {
-		return nil, fmt.Errorf("State %s not found in state machine definition", state)
+		return nil, plinkoerror.CreatePlinkoStateError(state, fmt.Sprintf("State %s not found in state machine definition", state))
 	}
 
 	keys := make([]plinko.Trigger, 0, len(sd2.Triggers))
@@ -55,12 +56,12 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 	sd2 := (*psm.pd.States)[state]
 
 	if sd2 == nil {
-		return payload, fmt.Errorf("State not found in definition of states: %s", state)
+		return payload, plinkoerror.CreatePlinkoStateError(state, fmt.Sprintf("State not found in definition of states: %s", state))
 	}
 
 	triggerData := sd2.Triggers[trigger]
 	if triggerData == nil {
-		return payload, fmt.Errorf("Trigger '%s' not found in definition for state: %s", trigger, state)
+		return payload, plinkoerror.CreatePlinkoTriggerError(trigger, fmt.Sprintf("Trigger '%s' not found in definition for state: %s", trigger, state))
 	}
 
 	destinationState := (*psm.pd.States)[triggerData.DestinationState]
