@@ -1,0 +1,21 @@
+package plinkoerror
+
+import (
+	"errors"
+	"testing"
+
+	"github.com/shipt/plinko"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestCreatePlinkoStateError(t *testing.T) {
+	var e *PlinkoStateError
+	err := CreatePlinkoStateError("foo", "set")
+
+	if errors.As(err, &e) {
+		assert.Equal(t, plinko.State("foo"), e.State)
+	} else {
+		assert.Fail(t, "error not returning properly")
+	}
+
+}
