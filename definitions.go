@@ -68,9 +68,9 @@ const (
 type StateAction string
 
 const (
-	BeforeTransition StateAction = "BeforeStateExit"
-	BetweenStates    StateAction = "AfterStateExit"
-	AfterTransition  StateAction = "BeforeStateEntry"
+	BeforeTransition StateAction = "BeforeTransition"
+	BetweenStates    StateAction = "MiddleTransition"
+	AfterTransition  StateAction = "AfterTransition"
 )
 
 type SideEffectFilter int

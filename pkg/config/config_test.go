@@ -204,8 +204,10 @@ func TestStateMachine(t *testing.T) {
 	p.Configure("RejectedOrder")
 
 	visitCount := 0
+	var lastStateAction plinko.StateAction
 	p.SideEffect(func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		visitCount += 1
+		lastStateAction = sa
 	})
 
 	compilerOutput := p.Compile()
@@ -215,8 +217,44 @@ func TestStateMachine(t *testing.T) {
 
 	psm.Fire(payload, "Submit")
 
+	assert.Equal(t, plinko.StateAction("AfterTransition"), lastStateAction)
 	assert.Equal(t, 3, visitCount)
+}
 
+func TestStateMachineSideEffectFiltering(t *testing.T) {
+	p := CreatePlinkoDefinition()
+
+	p.Configure(NewOrder).
+		OnEntry(OnNewOrderEntry).
+		Permit("Submit", "PublishedOrder").
+		Permit("Review", "UnderReview")
+
+	p.Configure("PublishedOrder").
+		OnEntry(OnNewOrderEntry).
+		Permit("Submit", NewOrder)
+
+	p.Configure("UnderReview").
+		Permit("CompleteReview", "PublishedOrder").
+		Permit("RejectOrder", "RejectedOrder")
+
+	p.Configure("RejectedOrder")
+
+	visitCount := 0
+	var lastStateAction plinko.StateAction
+	p.FilteredSideEffect(plinko.AllowAfterTransition, func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
+		visitCount += 1
+		lastStateAction = sa
+	})
+
+	compilerOutput := p.Compile()
+	psm := compilerOutput.StateMachine
+
+	payload := testPayload{state: NewOrder}
+
+	psm.Fire(payload, "Submit")
+
+	assert.Equal(t, plinko.StateAction("AfterTransition"), lastStateAction)
+	assert.Equal(t, 1, visitCount)
 }
 
 func TestCanFire(t *testing.T) {
