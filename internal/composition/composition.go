@@ -3,6 +3,7 @@ package composition
 import (
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/sideeffects"
+	"github.com/shipt/plinko/plinkoerror"
 )
 
 type ChainedFunctionCall struct {
@@ -52,9 +53,18 @@ func (cd *CallbackDefinitions) AddExit(predicate plinko.Predicate, operation pli
 	return cd
 }
 
-func executeChain(funcs []ChainedFunctionCall, p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload, error) {
+func executeChain(funcs []ChainedFunctionCall, p plinko.Payload, t plinko.TransitionInfo) (retPayload plinko.Payload, err error) {
+	step := 0
+	defer func() {
+		if err1 := recover(); err1 != nil {
+			retPayload = p
+			err = plinkoerror.CreatePlinkoPanicError(err1, t, step)
+		}
+	}()
+
 	if funcs != nil && len(funcs) > 0 {
 		for _, fn := range funcs {
+
 			if fn.Predicate != nil {
 				if !fn.Predicate(p, t) {
 					continue
@@ -62,7 +72,7 @@ func executeChain(funcs []ChainedFunctionCall, p plinko.Payload, t plinko.Transi
 			}
 
 			p, e := fn.Operation(p, t)
-
+			step++
 			if e != nil {
 				return p, e
 			}
@@ -73,7 +83,16 @@ func executeChain(funcs []ChainedFunctionCall, p plinko.Payload, t plinko.Transi
 
 }
 
-func executeErrorChain(funcs []ChainedErrorCall, p plinko.Payload, t *sideeffects.TransitionDef, err error) (plinko.Payload, *sideeffects.TransitionDef, error) {
+func executeErrorChain(funcs []ChainedErrorCall, p plinko.Payload, t *sideeffects.TransitionDef, err error) (retPayload plinko.Payload, retTd *sideeffects.TransitionDef, retErr error) {
+	step := 0
+	defer func() {
+		if err1 := recover(); err1 != nil {
+			retPayload = p
+			retTd = t
+			retErr = plinkoerror.CreatePlinkoPanicError(err1, t, step)
+		}
+	}()
+
 	if funcs != nil && len(funcs) > 0 {
 		for _, fn := range funcs {
 			p, e := fn.ErrorOperation(p, t, err)

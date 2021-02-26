@@ -4,9 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/bmizerany/assert"
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/sideeffects"
+	"github.com/shipt/plinko/plinkoerror"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAddEntry(t *testing.T) {
@@ -87,4 +88,76 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 	assert.Equal(t, 1, counter)
 	assert.Equal(t, errors.New("notwizard"), e)
 	assert.Equal(t, p, nil)
+}
+
+func TestChainedFunctionChainWithPanic(t *testing.T) {
+	transitionDef := sideeffects.TransitionDef{
+		Source:      "foo",
+		Destination: "GoodState",
+		Trigger:     "baz",
+	}
+
+	list := []ChainedFunctionCall{
+
+		ChainedFunctionCall{
+			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				return p, nil
+			},
+		},
+		ChainedFunctionCall{
+			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				panic(errors.New("panic-error"))
+				//return p, errors.New("notwizard")
+			},
+		},
+	}
+
+	p, err := executeChain(list, nil, transitionDef)
+
+	assert.Nil(t, p)
+	assert.NotNil(t, err)
+
+	e := err.(*plinkoerror.PlinkoPanicError)
+	assert.NotNil(t, e)
+
+	assert.Equal(t, "panic-error", e.InnerError.Error())
+	assert.Nil(t, e.UnknownInnerError)
+	assert.Equal(t, 1, e.StepNumber)
+
+}
+
+func TestErrorFunctionChainWithPanic(t *testing.T) {
+	transitionDef := sideeffects.TransitionDef{
+		Source:      "foo",
+		Destination: "GoodState",
+		Trigger:     "baz",
+	}
+
+	list := []ChainedErrorCall{
+		ChainedErrorCall{
+			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+
+				panic(errors.New("panic-error"))
+			},
+		},
+		ChainedErrorCall{
+			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+
+				return p, nil
+			},
+		},
+	}
+
+	p, td2, err := executeErrorChain(list, nil, &transitionDef, errors.New("encompassing-error"))
+
+	assert.Nil(t, p)
+	assert.NotNil(t, err)
+	assert.Equal(t, plinko.State("GoodState"), td2.Destination)
+
+	e := err.(*plinkoerror.PlinkoPanicError)
+	assert.NotNil(t, e)
+
+	assert.Equal(t, "panic-error", e.InnerError.Error())
+	assert.Nil(t, e.UnknownInnerError)
+	assert.Equal(t, 0, e.StepNumber)
 }
