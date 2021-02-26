@@ -106,7 +106,7 @@ func TestChainedFunctionChainWithPanic(t *testing.T) {
 		},
 		ChainedFunctionCall{
 			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
-				panic(errors.New("OOGABOOGA"))
+				panic(errors.New("panic-error"))
 				//return p, errors.New("notwizard")
 			},
 		},
@@ -120,13 +120,12 @@ func TestChainedFunctionChainWithPanic(t *testing.T) {
 	e := err.(*plinkoerror.PlinkoPanicError)
 	assert.NotNil(t, e)
 
-	assert.Equal(t, "OOGABOOGA", e.InnerError.Error())
+	assert.Equal(t, "panic-error", e.InnerError.Error())
 	assert.Nil(t, e.UnknownInnerError)
 	assert.Equal(t, 1, e.StepNumber)
 
 }
 
-/*
 func TestErrorFunctionChainWithPanic(t *testing.T) {
 	transitionDef := sideeffects.TransitionDef{
 		Source:      "foo",
@@ -135,31 +134,30 @@ func TestErrorFunctionChainWithPanic(t *testing.T) {
 	}
 
 	list := []ChainedErrorCall{
+		ChainedErrorCall{
+			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 
-		ChainedFunctionCall{
-			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
-				return p, nil
+				panic(errors.New("panic-error"))
 			},
 		},
-		ChainedFunctionCall{
-			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
-				panic(errors.New("OOGABOOGA"))
-				//return p, errors.New("notwizard")
+		ChainedErrorCall{
+			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+
+				return p, nil
 			},
 		},
 	}
 
-	p, err := executeChain(list, nil, transitionDef)
+	p, td2, err := executeErrorChain(list, nil, &transitionDef, errors.New("encompassing-error"))
 
 	assert.Nil(t, p)
 	assert.NotNil(t, err)
+	assert.Equal(t, plinko.State("GoodState"), td2.Destination)
 
 	e := err.(*plinkoerror.PlinkoPanicError)
 	assert.NotNil(t, e)
 
-	assert.Equal(t, "OOGABOOGA", e.InnerError.Error())
+	assert.Equal(t, "panic-error", e.InnerError.Error())
 	assert.Nil(t, e.UnknownInnerError)
-	assert.Equal(t, 1, e.StepNumber)
-
+	assert.Equal(t, 0, e.StepNumber)
 }
-*/
