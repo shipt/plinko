@@ -4,9 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/bmizerany/assert"
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/sideeffects"
+	"github.com/shipt/plinko/plinkoerror"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAddEntry(t *testing.T) {
@@ -88,3 +89,77 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 	assert.Equal(t, errors.New("notwizard"), e)
 	assert.Equal(t, p, nil)
 }
+
+func TestChainedFunctionChainWithPanic(t *testing.T) {
+	transitionDef := sideeffects.TransitionDef{
+		Source:      "foo",
+		Destination: "GoodState",
+		Trigger:     "baz",
+	}
+
+	list := []ChainedFunctionCall{
+
+		ChainedFunctionCall{
+			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				return p, nil
+			},
+		},
+		ChainedFunctionCall{
+			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				panic(errors.New("OOGABOOGA"))
+				//return p, errors.New("notwizard")
+			},
+		},
+	}
+
+	p, err := executeChain(list, nil, transitionDef)
+
+	assert.Nil(t, p)
+	assert.NotNil(t, err)
+
+	e := err.(*plinkoerror.PlinkoPanicError)
+	assert.NotNil(t, e)
+
+	assert.Equal(t, "OOGABOOGA", e.InnerError.Error())
+	assert.Nil(t, e.UnknownInnerError)
+	assert.Equal(t, 1, e.StepNumber)
+
+}
+
+/*
+func TestErrorFunctionChainWithPanic(t *testing.T) {
+	transitionDef := sideeffects.TransitionDef{
+		Source:      "foo",
+		Destination: "GoodState",
+		Trigger:     "baz",
+	}
+
+	list := []ChainedErrorCall{
+
+		ChainedFunctionCall{
+			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				return p, nil
+			},
+		},
+		ChainedFunctionCall{
+			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				panic(errors.New("OOGABOOGA"))
+				//return p, errors.New("notwizard")
+			},
+		},
+	}
+
+	p, err := executeChain(list, nil, transitionDef)
+
+	assert.Nil(t, p)
+	assert.NotNil(t, err)
+
+	e := err.(*plinkoerror.PlinkoPanicError)
+	assert.NotNil(t, e)
+
+	assert.Equal(t, "OOGABOOGA", e.InnerError.Error())
+	assert.Nil(t, e.UnknownInnerError)
+	assert.Equal(t, 1, e.StepNumber)
+
+}
+*/
