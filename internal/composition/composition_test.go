@@ -1,6 +1,7 @@
 package composition
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -10,10 +11,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type testPayload struct {
+	value string
+}
+
+func (t *testPayload) GetState() plinko.State {
+	return "stub"
+}
+
 func TestAddEntry(t *testing.T) {
 	cd := CallbackDefinitions{}
 
-	cd.AddEntry(nil, func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+	cd.AddEntry(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 		return pp, nil
 	})
 
@@ -23,7 +32,7 @@ func TestAddEntry(t *testing.T) {
 func TestAddExit(t *testing.T) {
 	cd := CallbackDefinitions{}
 
-	cd.AddExit(nil, func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+	cd.AddExit(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 		return pp, nil
 	})
 
@@ -41,14 +50,14 @@ func TestExecuteErrorChainSingleFunctionWithModifiedDestination(t *testing.T) {
 	}
 	list := []ChainedErrorCall{
 		ChainedErrorCall{
-			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 				m.SetDestination(ErrorState)
 				return p, nil
 			},
 		},
 	}
 
-	p, t1, e := executeErrorChain(list, nil, &transitionDef, errors.New("wizard"))
+	p, t1, e := executeErrorChain(context.TODO(), list, nil, &transitionDef, errors.New("wizard"))
 
 	assert.Equal(t, ErrorState, t1.GetDestination())
 	assert.Equal(t, errors.New("wizard"), e)
@@ -68,13 +77,13 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 	counter := 0
 	list := []ChainedErrorCall{
 		ChainedErrorCall{
-			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 				counter++
 				return p, errors.New("notwizard")
 			},
 		},
 		ChainedErrorCall{
-			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 				m.SetDestination(ErrorState)
 				counter++
 				return p, nil
@@ -82,12 +91,46 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 		},
 	}
 
-	p, t1, e := executeErrorChain(list, nil, &transitionDef, errors.New("wizard"))
+	p, t1, e := executeErrorChain(context.TODO(), list, nil, &transitionDef, errors.New("wizard"))
 
 	assert.Equal(t, GoodState, t1.GetDestination())
 	assert.Equal(t, 1, counter)
 	assert.Equal(t, errors.New("notwizard"), e)
 	assert.Equal(t, p, nil)
+}
+
+func TestChainedFunctionPassingProperly(t *testing.T) {
+	payload := &testPayload{}
+	transitionDef := sideeffects.TransitionDef{
+		Source:      "foo",
+		Destination: "GoodState",
+		Trigger:     "baz",
+	}
+
+	list := []ChainedFunctionCall{
+
+		ChainedFunctionCall{
+			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				t := p.(*testPayload)
+				t.value = "foo"
+
+				return p, nil
+			},
+		},
+		ChainedFunctionCall{
+			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				te := p.(*testPayload)
+				assert.Equal(t, "foo", te.value)
+
+				return p, nil
+			},
+		},
+	}
+
+	p, err := executeChain(context.TODO(), list, payload, transitionDef)
+
+	assert.NotNil(t, p)
+	assert.Nil(t, err)
 }
 
 func TestChainedFunctionChainWithPanic(t *testing.T) {
@@ -100,19 +143,19 @@ func TestChainedFunctionChainWithPanic(t *testing.T) {
 	list := []ChainedFunctionCall{
 
 		ChainedFunctionCall{
-			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
 				return p, nil
 			},
 		},
 		ChainedFunctionCall{
-			Operation: func(p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
 				panic(errors.New("panic-error"))
 				//return p, errors.New("notwizard")
 			},
 		},
 	}
 
-	p, err := executeChain(list, nil, transitionDef)
+	p, err := executeChain(context.TODO(), list, nil, transitionDef)
 
 	assert.Nil(t, p)
 	assert.NotNil(t, err)
@@ -135,20 +178,20 @@ func TestErrorFunctionChainWithPanic(t *testing.T) {
 
 	list := []ChainedErrorCall{
 		ChainedErrorCall{
-			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 
 				panic(errors.New("panic-error"))
 			},
 		},
 		ChainedErrorCall{
-			ErrorOperation: func(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 
 				return p, nil
 			},
 		},
 	}
 
-	p, td2, err := executeErrorChain(list, nil, &transitionDef, errors.New("encompassing-error"))
+	p, td2, err := executeErrorChain(context.TODO(), list, nil, &transitionDef, errors.New("encompassing-error"))
 
 	assert.Nil(t, p)
 	assert.NotNil(t, err)

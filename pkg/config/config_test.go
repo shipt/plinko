@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -28,11 +29,11 @@ const Deliver plinko.Trigger = "Deliver"
 const Return plinko.Trigger = "Return"
 const Reinstate plinko.Trigger = "Reinstate"
 
-func entryFunctionForTest(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+func entryFunctionForTest(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 	return nil, fmt.Errorf("misc entry error")
 }
 
-func exitFunctionForTest(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+func exitFunctionForTest(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 	return nil, fmt.Errorf("misc exit error")
 }
 
@@ -144,7 +145,7 @@ type testPayload struct {
 	condition bool
 }
 
-func (p testPayload) GetState() plinko.State {
+func (p *testPayload) GetState() plinko.State {
 	return p.state
 }
 
@@ -158,7 +159,17 @@ func TestOnEntryTriggerOperation(t *testing.T) {
 		Permit("Review", "UnderReview")
 
 	p.Configure("PublishedOrder").
-		OnTriggerEntry("Resupply", func(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+		OnTriggerEntry("Resupply", func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+			p := pp.(*testPayload)
+			p.condition = true
+
+			counter++
+			return pp, nil
+		}).
+		OnTriggerEntry("Resupply", func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+			p := pp.(*testPayload)
+			assert.True(t, p.condition)
+
 			counter++
 			return pp, nil
 		}).
@@ -168,23 +179,53 @@ func TestOnEntryTriggerOperation(t *testing.T) {
 	compilerOutput := p.Compile()
 	psm := compilerOutput.StateMachine
 
-	payload := testPayload{state: "PublishedOrder"}
+	payload := &testPayload{
+		state:     "PublishedOrder",
+		condition: false,
+	}
 
-	psm.Fire(payload, "Resupply")
-	assert.Equal(t, 1, counter)
+	p2, err := psm.Fire(context.TODO(), payload, "Resupply")
 
-	psm.Fire(payload, "Resubmit")
-	assert.Equal(t, 1, counter)
+	testPayload := p2.(*testPayload)
 
-	psm.Fire(payload, "Resupply")
+	assert.Nil(t, err)
 	assert.Equal(t, 2, counter)
+	assert.True(t, testPayload.condition)
+
+	psm.Fire(context.TODO(), payload, "Resubmit")
+	assert.Equal(t, 2, counter)
+
+	psm.Fire(context.TODO(), payload, "Resupply")
+	assert.Equal(t, 4, counter)
 
 }
 
-func OnNewOrderEntry(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+func OnNewOrderEntry(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 	fmt.Printf("onentry: %+v", transitionInfo)
 	return pp, nil
 }
+
+func OnPublishEntry_Step1(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+	fmt.Printf("onentry: %+v", transitionInfo)
+
+	p := pp.(*testPayload)
+	p.condition = true
+
+	return pp, nil
+}
+
+func OnPublishEntry_Step2(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+	fmt.Printf("onentry: %+v", transitionInfo)
+
+	p := pp.(*testPayload)
+
+	if !p.condition {
+		panic("error")
+	}
+
+	return pp, nil
+}
+
 func TestStateMachine(t *testing.T) {
 	p := CreatePlinkoDefinition()
 
@@ -194,7 +235,8 @@ func TestStateMachine(t *testing.T) {
 		Permit("Review", "UnderReview")
 
 	p.Configure("PublishedOrder").
-		OnEntry(OnNewOrderEntry).
+		OnEntry(OnPublishEntry_Step1).
+		OnEntry(OnPublishEntry_Step2).
 		Permit("Submit", NewOrder)
 
 	p.Configure("UnderReview").
@@ -205,7 +247,7 @@ func TestStateMachine(t *testing.T) {
 
 	visitCount := 0
 	var lastStateAction plinko.StateAction
-	p.SideEffect(func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
+	p.SideEffect(func(_ context.Context, sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		visitCount += 1
 		lastStateAction = sa
 	})
@@ -213,9 +255,9 @@ func TestStateMachine(t *testing.T) {
 	compilerOutput := p.Compile()
 	psm := compilerOutput.StateMachine
 
-	payload := testPayload{state: NewOrder}
+	payload := &testPayload{state: NewOrder}
 
-	psm.Fire(payload, "Submit")
+	psm.Fire(context.TODO(), payload, "Submit")
 
 	assert.Equal(t, plinko.StateAction("AfterTransition"), lastStateAction)
 	assert.Equal(t, 3, visitCount)
@@ -241,7 +283,7 @@ func TestStateMachineSideEffectFiltering(t *testing.T) {
 
 	visitCount := 0
 	var lastStateAction plinko.StateAction
-	p.FilteredSideEffect(plinko.AllowAfterTransition, func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
+	p.FilteredSideEffect(plinko.AllowAfterTransition, func(_ context.Context, sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		visitCount += 1
 		lastStateAction = sa
 	})
@@ -251,7 +293,7 @@ func TestStateMachineSideEffectFiltering(t *testing.T) {
 
 	payload := testPayload{state: NewOrder}
 
-	psm.Fire(payload, "Submit")
+	psm.Fire(context.TODO(), &payload, "Submit")
 
 	assert.Equal(t, plinko.StateAction("AfterTransition"), lastStateAction)
 	assert.Equal(t, 1, visitCount)
@@ -269,14 +311,14 @@ func TestCanFire(t *testing.T) {
 
 	psm := co.StateMachine
 
-	payload := testPayload{state: Created}
+	payload := &testPayload{state: Created}
 
-	assert.True(t, psm.CanFire(payload, Open))
-	assert.False(t, psm.CanFire(payload, Deliver))
+	assert.True(t, psm.CanFire(context.TODO(), payload, Open))
+	assert.False(t, psm.CanFire(context.TODO(), payload, Deliver))
 }
 
-func PermitIfPredicate(p plinko.Payload, t plinko.TransitionInfo) bool {
-	tp := p.(testPayload)
+func PermitIfPredicate(_ context.Context, p plinko.Payload, t plinko.TransitionInfo) bool {
+	tp := p.(*testPayload)
 
 	return tp.condition
 }
@@ -293,14 +335,14 @@ func TestCanFireWithPermitIf(t *testing.T) {
 
 	psm := co.StateMachine
 
-	payload := testPayload{
+	payload := &testPayload{
 		state:     Created,
 		condition: true,
 	}
-	assert.True(t, psm.CanFire(payload, Open))
+	assert.True(t, psm.CanFire(context.TODO(), payload, Open))
 
 	payload.condition = false
-	assert.False(t, psm.CanFire(payload, Open))
+	assert.False(t, psm.CanFire(context.TODO(), payload, Open))
 
 }
 
@@ -371,7 +413,7 @@ func TestEnumerateTriggers(t *testing.T) {
 	co := p.Compile()
 
 	psm := co.StateMachine
-	payload := testPayload{state: Created}
+	payload := &testPayload{state: Created}
 	triggers, err := psm.EnumerateActiveTriggers(payload)
 
 	assert.Nil(t, err)
@@ -379,24 +421,24 @@ func TestEnumerateTriggers(t *testing.T) {
 	assert.True(t, findTrigger(triggers, Cancel))
 	assert.False(t, findTrigger(triggers, Claim))
 
-	payload = testPayload{state: Opened}
+	payload = &testPayload{state: Opened}
 	triggers, err = psm.EnumerateActiveTriggers(payload)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(triggers))
 
 	// request a state that doesn't exist in the state machine definiton and get an error thrown
-	payload = testPayload{state: Claimed}
+	payload = &testPayload{state: Claimed}
 	triggers, err = psm.EnumerateActiveTriggers(payload)
 
 	assert.NotNil(t, err)
 }
 
-func ErroringStep(pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+func ErroringStep(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 	return pp, errors.New("not-wizard")
 }
 
-func ErrorHandler(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+func ErrorHandler(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 	m.SetDestination("RejectedOrder")
 
 	return p, nil
@@ -424,7 +466,7 @@ func TestStateMachineErrorHandling(t *testing.T) {
 	transitionVisitCount := 0
 	var transitionInfo plinko.TransitionInfo
 	transitionInfo = nil
-	p.SideEffect(func(sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
+	p.SideEffect(func(_ context.Context, sa plinko.StateAction, payload plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		transitionInfo = ti
 		transitionVisitCount++
 	})
@@ -432,9 +474,9 @@ func TestStateMachineErrorHandling(t *testing.T) {
 	compilerOutput := p.Compile()
 	psm := compilerOutput.StateMachine
 
-	payload := testPayload{state: NewOrder}
+	payload := &testPayload{state: NewOrder}
 
-	p1, e := psm.Fire(payload, "Submit")
+	p1, e := psm.Fire(context.TODO(), payload, "Submit")
 
 	assert.NotNil(t, transitionInfo)
 	assert.NotNil(t, p1)

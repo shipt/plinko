@@ -1,11 +1,13 @@
 package plinko
 
+import "context"
+
 type State string
 type Trigger string
 
-type Predicate func(Payload, TransitionInfo) bool
-type Operation func(Payload, TransitionInfo) (Payload, error)
-type ErrorOperation func(Payload, ModifiableTransitionInfo, error) (Payload, error)
+type Predicate func(context.Context, Payload, TransitionInfo) bool
+type Operation func(context.Context, Payload, TransitionInfo) (Payload, error)
+type ErrorOperation func(context.Context, Payload, ModifiableTransitionInfo, error) (Payload, error)
 
 type StateDefinition interface {
 	//State() string
@@ -20,8 +22,8 @@ type StateDefinition interface {
 }
 
 type StateMachine interface {
-	Fire(payload Payload, trigger Trigger) (Payload, error)
-	CanFire(payload Payload, trigger Trigger) bool
+	Fire(context.Context, Payload, Trigger) (Payload, error)
+	CanFire(context.Context, Payload, Trigger) bool
 	EnumerateActiveTriggers(payload Payload) ([]Trigger, error)
 }
 
@@ -38,7 +40,7 @@ type ModifiableTransitionInfo interface {
 	SetDestination(State)
 }
 
-type SideEffect func(StateAction, Payload, TransitionInfo, int64)
+type SideEffect func(context.Context, StateAction, Payload, TransitionInfo, int64)
 
 type PlinkoDefinition interface {
 	Configure(State) StateDefinition

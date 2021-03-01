@@ -1,6 +1,10 @@
 package sideeffects
 
-import "github.com/shipt/plinko"
+import (
+	"context"
+
+	"github.com/shipt/plinko"
+)
 
 // AllowAllSideEffects is a convenience constant for registering a global
 const AllowAllSideEffects = plinko.AllowBeforeTransition | plinko.AllowAfterTransition | plinko.AllowBetweenStates
@@ -56,12 +60,12 @@ func (td TransitionDef) GetTrigger() plinko.Trigger {
 
 // Dispatch is responsible for executing a set of side effect definitions when called upon.  It is sensitive to the definition
 //   in terms of what is called.
-func Dispatch(stateAction plinko.StateAction, sideEffects []SideEffectDefinition, payload plinko.Payload, transitionInfo plinko.TransitionInfo, elapsedMilliseconds int64) int {
+func Dispatch(ctx context.Context, stateAction plinko.StateAction, sideEffects []SideEffectDefinition, payload plinko.Payload, transitionInfo plinko.TransitionInfo, elapsedMilliseconds int64) int {
 	iCount := 0
 	for _, sideEffectDefinition := range sideEffects {
 		if sideEffectDefinition.Filter&getFilterDefinition(stateAction) > 0 {
 
-			sideEffectDefinition.SideEffect(stateAction, payload, transitionInfo, elapsedMilliseconds)
+			sideEffectDefinition.SideEffect(ctx, stateAction, payload, transitionInfo, elapsedMilliseconds)
 			iCount++
 		}
 	}
