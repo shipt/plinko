@@ -1,6 +1,8 @@
 package composition
 
 import (
+	"context"
+
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/sideeffects"
 	"github.com/shipt/plinko/plinkoerror"
@@ -53,7 +55,7 @@ func (cd *CallbackDefinitions) AddExit(predicate plinko.Predicate, operation pli
 	return cd
 }
 
-func executeChain(funcs []ChainedFunctionCall, p plinko.Payload, t plinko.TransitionInfo) (retPayload plinko.Payload, err error) {
+func executeChain(ctx context.Context, funcs []ChainedFunctionCall, p plinko.Payload, t plinko.TransitionInfo) (retPayload plinko.Payload, err error) {
 	step := 0
 	defer func() {
 		if err1 := recover(); err1 != nil {
@@ -66,12 +68,12 @@ func executeChain(funcs []ChainedFunctionCall, p plinko.Payload, t plinko.Transi
 		for _, fn := range funcs {
 
 			if fn.Predicate != nil {
-				if !fn.Predicate(p, t) {
+				if !fn.Predicate(ctx, p, t) {
 					continue
 				}
 			}
 
-			p, e := fn.Operation(p, t)
+			p, e := fn.Operation(ctx, p, t)
 			step++
 			if e != nil {
 				return p, e
@@ -83,7 +85,7 @@ func executeChain(funcs []ChainedFunctionCall, p plinko.Payload, t plinko.Transi
 
 }
 
-func executeErrorChain(funcs []ChainedErrorCall, p plinko.Payload, t *sideeffects.TransitionDef, err error) (retPayload plinko.Payload, retTd *sideeffects.TransitionDef, retErr error) {
+func executeErrorChain(ctx context.Context, funcs []ChainedErrorCall, p plinko.Payload, t *sideeffects.TransitionDef, err error) (retPayload plinko.Payload, retTd *sideeffects.TransitionDef, retErr error) {
 	step := 0
 	defer func() {
 		if err1 := recover(); err1 != nil {
@@ -95,7 +97,7 @@ func executeErrorChain(funcs []ChainedErrorCall, p plinko.Payload, t *sideeffect
 
 	if funcs != nil && len(funcs) > 0 {
 		for _, fn := range funcs {
-			p, e := fn.ErrorOperation(p, t, err)
+			p, e := fn.ErrorOperation(ctx, p, t, err)
 
 			if e != nil {
 				return p, t, e
@@ -106,16 +108,16 @@ func executeErrorChain(funcs []ChainedErrorCall, p plinko.Payload, t *sideeffect
 	return p, t, err
 }
 
-func (cd *CallbackDefinitions) ExecuteExitChain(p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload, error) {
-	return executeChain(cd.OnExitFn, p, t)
+func (cd *CallbackDefinitions) ExecuteExitChain(ctx context.Context, p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload, error) {
+	return executeChain(ctx, cd.OnExitFn, p, t)
 }
 
-func (cd *CallbackDefinitions) ExecuteEntryChain(p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload, error) {
-	return executeChain(cd.OnEntryFn, p, t)
+func (cd *CallbackDefinitions) ExecuteEntryChain(ctx context.Context, p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload, error) {
+	return executeChain(ctx, cd.OnEntryFn, p, t)
 }
 
-func (cd *CallbackDefinitions) ExecuteErrorChain(p plinko.Payload, t *sideeffects.TransitionDef, err error, elapsedMilliseconds int64) (plinko.Payload, *sideeffects.TransitionDef, error) {
-	p, mt, err := executeErrorChain(cd.OnErrorFn, p, t, err)
+func (cd *CallbackDefinitions) ExecuteErrorChain(ctx context.Context, p plinko.Payload, t *sideeffects.TransitionDef, err error, elapsedMilliseconds int64) (plinko.Payload, *sideeffects.TransitionDef, error) {
+	p, mt, err := executeErrorChain(ctx, cd.OnErrorFn, p, t, err)
 
 	return p, mt, err
 }

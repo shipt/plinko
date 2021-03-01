@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -26,7 +27,7 @@ func (psm plinkoStateMachine) EnumerateActiveTriggers(payload plinko.Payload) ([
 
 }
 
-func (psm plinkoStateMachine) CanFire(payload plinko.Payload, trigger plinko.Trigger) bool {
+func (psm plinkoStateMachine) CanFire(ctx context.Context, payload plinko.Payload, trigger plinko.Trigger) bool {
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
 
@@ -40,7 +41,7 @@ func (psm plinkoStateMachine) CanFire(payload plinko.Payload, trigger plinko.Tri
 	}
 
 	if triggerData.Predicate != nil {
-		return triggerData.Predicate(payload, sideeffects.TransitionDef{
+		return triggerData.Predicate(ctx, payload, sideeffects.TransitionDef{
 			Destination: triggerData.DestinationState,
 			Source:      state,
 			Trigger:     triggerData.Name,
@@ -50,7 +51,7 @@ func (psm plinkoStateMachine) CanFire(payload plinko.Payload, trigger plinko.Tri
 	return true
 }
 
-func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigger) (plinko.Payload, error) {
+func (psm plinkoStateMachine) Fire(ctx context.Context, payload plinko.Payload, trigger plinko.Trigger) (plinko.Payload, error) {
 	start := time.Now()
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
@@ -72,28 +73,28 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 		Trigger:     trigger,
 	}
 
-	sideeffects.Dispatch(plinko.BeforeTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
+	sideeffects.Dispatch(ctx, plinko.BeforeTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 
-	payload, err := sd2.Callbacks.ExecuteExitChain(payload, td)
+	payload, err := sd2.Callbacks.ExecuteExitChain(ctx, payload, td)
 
 	if err != nil {
-		payload, td, errSub := sd2.Callbacks.ExecuteErrorChain(payload, td, err, time.Since(start).Milliseconds())
+		payload, td, errSub := sd2.Callbacks.ExecuteErrorChain(ctx, payload, td, err, time.Since(start).Milliseconds())
 
 		if errSub != nil {
 			// this ensures that the error condition is trapped and not overriden to the caller of the trigger function
 			err = errSub
 		}
-		sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
+		sideeffects.Dispatch(ctx, plinko.BetweenStates, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 		return payload, err
 	}
 
-	sideeffects.Dispatch(plinko.BetweenStates, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
+	sideeffects.Dispatch(ctx, plinko.BetweenStates, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 
-	payload, err = destinationState.Callbacks.ExecuteEntryChain(payload, td)
+	payload, err = destinationState.Callbacks.ExecuteEntryChain(ctx, payload, td)
 	if err != nil {
 		var errSub error
 
-		payload, mtd, errSub := destinationState.Callbacks.ExecuteErrorChain(payload, td, err, time.Since(start).Milliseconds())
+		payload, mtd, errSub := destinationState.Callbacks.ExecuteErrorChain(ctx, payload, td, err, time.Since(start).Milliseconds())
 		td = &sideeffects.TransitionDef{
 			Source:      mtd.GetSource(),
 			Destination: mtd.GetDestination(),
@@ -107,7 +108,7 @@ func (psm plinkoStateMachine) Fire(payload plinko.Payload, trigger plinko.Trigge
 		return payload, err
 	}
 
-	sideeffects.Dispatch(plinko.AfterTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
+	sideeffects.Dispatch(ctx, plinko.AfterTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
 
 	return payload, nil
 }

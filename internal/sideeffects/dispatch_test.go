@@ -1,6 +1,7 @@
 package sideeffects
 
 import (
+	"context"
 	"testing"
 
 	"github.com/shipt/plinko"
@@ -20,25 +21,25 @@ func TestCallEffects_Multiple(t *testing.T) {
 	var effects []SideEffectDefinition
 	callCount := 0
 
-	effects = append(effects, SideEffectDefinition{Filter: AllowAllSideEffects, SideEffect: func(sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
+	effects = append(effects, SideEffectDefinition{Filter: AllowAllSideEffects, SideEffect: func(_ context.Context, sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		callCount++
 		assert.NotNil(t, p)
 		assert.NotNil(t, ti)
 	}})
 
-	effects = append(effects, SideEffectDefinition{Filter: AllowAllSideEffects, SideEffect: func(sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
+	effects = append(effects, SideEffectDefinition{Filter: AllowAllSideEffects, SideEffect: func(_ context.Context, sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		callCount++
 		assert.NotNil(t, p)
 		assert.NotNil(t, ti)
 	}})
 
-	effects = append(effects, SideEffectDefinition{Filter: AllowAllSideEffects, SideEffect: func(sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
+	effects = append(effects, SideEffectDefinition{Filter: AllowAllSideEffects, SideEffect: func(_ context.Context, sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		callCount++
 		assert.NotNil(t, p)
 		assert.NotNil(t, ti)
 	}})
 
-	effects = append(effects, SideEffectDefinition{Filter: plinko.AllowAfterTransition, SideEffect: func(sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
+	effects = append(effects, SideEffectDefinition{Filter: plinko.AllowAfterTransition, SideEffect: func(_ context.Context, sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, elapsed int64) {
 		callCount++
 		assert.NotNil(t, p)
 		assert.NotNil(t, ti)
@@ -47,13 +48,13 @@ func TestCallEffects_Multiple(t *testing.T) {
 	payload := testPayload{}
 	trInfo := TransitionDef{}
 
-	count := Dispatch(plinko.BeforeTransition, effects, payload, trInfo, 200)
+	count := Dispatch(context.TODO(), plinko.BeforeTransition, effects, payload, trInfo, 200)
 
 	assert.Equal(t, 3, callCount)
 	assert.Equal(t, 3, count)
 
 	callCount = 0
-	count = Dispatch(plinko.AfterTransition, effects, payload, trInfo, 200)
+	count = Dispatch(context.TODO(), plinko.AfterTransition, effects, payload, trInfo, 200)
 
 	assert.Equal(t, 4, callCount)
 	assert.Equal(t, 4, count)
@@ -61,7 +62,7 @@ func TestCallEffects_Multiple(t *testing.T) {
 
 func TestCallSideEffectsWithNilSet(t *testing.T) {
 
-	result := Dispatch(plinko.BeforeTransition, nil, nil, nil, 0)
+	result := Dispatch(context.TODO(), plinko.BeforeTransition, nil, nil, nil, 0)
 
 	assert.True(t, result == 0)
 }
@@ -70,7 +71,7 @@ func TestCallEffects(t *testing.T) {
 	var effects []SideEffectDefinition
 	callCount := 0
 
-	effects = append(effects, SideEffectDefinition{Filter: AllowAllSideEffects, SideEffect: func(sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, em int64) {
+	effects = append(effects, SideEffectDefinition{Filter: AllowAllSideEffects, SideEffect: func(_ context.Context, sa plinko.StateAction, p plinko.Payload, ti plinko.TransitionInfo, em int64) {
 		callCount++
 		assert.NotNil(t, p)
 		assert.NotNil(t, ti)
@@ -79,7 +80,7 @@ func TestCallEffects(t *testing.T) {
 	payload := testPayload{}
 	trInfo := TransitionDef{}
 
-	result := Dispatch(plinko.BeforeTransition, effects, payload, trInfo, 42)
+	result := Dispatch(context.TODO(), plinko.BeforeTransition, effects, payload, trInfo, 42)
 
 	assert.Equal(t, result, 1)
 }

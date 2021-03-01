@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -41,7 +42,7 @@ func (sd InternalStateDefinition) OnExit(exitFn plinko.Operation) plinko.StateDe
 }
 
 func (sd InternalStateDefinition) OnTriggerEntry(trigger plinko.Trigger, entryFn plinko.Operation) plinko.StateDefinition {
-	sd.Callbacks.AddEntry(func(_ plinko.Payload, t plinko.TransitionInfo) bool {
+	sd.Callbacks.AddEntry(func(_ context.Context, _ plinko.Payload, t plinko.TransitionInfo) bool {
 		return t.GetTrigger() == trigger
 	}, entryFn)
 
@@ -50,7 +51,7 @@ func (sd InternalStateDefinition) OnTriggerEntry(trigger plinko.Trigger, entryFn
 }
 
 func (sd InternalStateDefinition) OnTriggerExit(trigger plinko.Trigger, exitFn plinko.Operation) plinko.StateDefinition {
-	sd.Callbacks.AddExit(func(_ plinko.Payload, t plinko.TransitionInfo) bool {
+	sd.Callbacks.AddExit(func(_ context.Context, _ plinko.Payload, t plinko.TransitionInfo) bool {
 		return t.GetTrigger() == trigger
 	}, exitFn)
 
@@ -131,7 +132,7 @@ type compileInfo struct {
 type TriggerDefinition struct {
 	Name             plinko.Trigger
 	DestinationState plinko.State
-	Predicate        func(plinko.Payload, plinko.TransitionInfo) bool
+	Predicate        func(context.Context, plinko.Payload, plinko.TransitionInfo) bool
 }
 
 type PlinkoDataStructure struct {
@@ -142,7 +143,7 @@ func getFunctionName(i interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }
 
-func addPermit(sd *InternalStateDefinition, trigger plinko.Trigger, destination plinko.State, predicate func(plinko.Payload, plinko.TransitionInfo) bool) {
+func addPermit(sd *InternalStateDefinition, trigger plinko.Trigger, destination plinko.State, predicate func(context.Context, plinko.Payload, plinko.TransitionInfo) bool) {
 	if _, ok := sd.Triggers[trigger]; ok {
 		panic(fmt.Sprintf("Trigger: %s - has already been defined, plinko configuration invalid.", trigger))
 	}

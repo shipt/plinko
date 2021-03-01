@@ -21,6 +21,7 @@ An order can be in different states during it's lifecycle:  Open, Claimed, Deliv
 * Simple support for states and triggers
 * Entry/Exit events for states
 * Side Effect support for supporting uniform functionality when modifying state
+* Error events used to properly respond to errors raised during a state transition
 
 Some useful extensions are also provided:
 
@@ -108,7 +109,7 @@ We can trigger the state processes by creating a PlinkoPayload and handing it to
 
 ```go
 payload := appPayload{ /* ... */ }
-fsm.Fire(appPayload, Submit)
+fsm.Fire(ctx, appPayload, Submit)
 ```
 
 ## Permitted Transitions
@@ -127,7 +128,7 @@ p.Configure(Claimed).
 This is useful, because I now have guard rails around when a `Cancel` trigger can be used and when it cannot.  Furthermore, I can use the `CanFire()` method of the state machine to ask if I have a valid action:
 
 ```go
-if !fsm.CanFire(payload, Cancel) {
+if !fsm.CanFire(ctx, payload, Cancel) {
 	return "Cannot perform this action"
 }
 ```
@@ -305,6 +306,8 @@ p.Configure(Opened).
 	Permit(Cancel, Canceled)
 ```
 
+## Panic Support
+On calls to Entry or Exit Functions, Plinko will capture any panics.  These panics are recorded as a structured error, containing when and where the error occured.  The `OnError` handlers can then respond as appropriate.
 
 ## State Machine self-documentation
 The fsm can document itself upon a successful compile - emitting PlantUML which can, in turn, be rendered into a state diagram:
