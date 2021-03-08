@@ -27,17 +27,17 @@ func (psm plinkoStateMachine) EnumerateActiveTriggers(payload plinko.Payload) ([
 
 }
 
-func (psm plinkoStateMachine) CanFire(ctx context.Context, payload plinko.Payload, trigger plinko.Trigger) bool {
+func (psm plinkoStateMachine) CanFire(ctx context.Context, payload plinko.Payload, trigger plinko.Trigger) error {
 	state := payload.GetState()
 	sd2 := (*psm.pd.States)[state]
 
 	if sd2 == nil {
-		return false
+		return plinkoerror.CreatePlinkoStateError(state, "State '%s' not defined")
 	}
 
 	triggerData := sd2.Triggers[trigger]
 	if triggerData == nil {
-		return false
+		return plinkoerror.CreatePlinkoTriggerError(trigger, fmt.Sprintf("Triggers '%s' not defined for state '%s'", trigger, state))
 	}
 
 	if triggerData.Predicate != nil {
@@ -48,7 +48,7 @@ func (psm plinkoStateMachine) CanFire(ctx context.Context, payload plinko.Payloa
 		})
 	}
 
-	return true
+	return nil
 }
 
 func (psm plinkoStateMachine) Fire(ctx context.Context, payload plinko.Payload, trigger plinko.Trigger) (plinko.Payload, error) {

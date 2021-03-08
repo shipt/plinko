@@ -5,7 +5,8 @@ import "context"
 type State string
 type Trigger string
 
-type Predicate func(context.Context, Payload, TransitionInfo) bool
+type Predicate func(context.Context, Payload, TransitionInfo) error
+type TriggerPredicate func(context.Context, Payload, TransitionInfo) bool
 type Operation func(context.Context, Payload, TransitionInfo) (Payload, error)
 type ErrorOperation func(context.Context, Payload, ModifiableTransitionInfo, error) (Payload, error)
 
@@ -23,7 +24,7 @@ type StateDefinition interface {
 
 type StateMachine interface {
 	Fire(context.Context, Payload, Trigger) (Payload, error)
-	CanFire(context.Context, Payload, Trigger) bool
+	CanFire(context.Context, Payload, Trigger) error
 	EnumerateActiveTriggers(payload Payload) ([]Trigger, error)
 }
 
