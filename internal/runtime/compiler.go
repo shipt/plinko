@@ -54,7 +54,6 @@ func (pd PlinkoDefinition) RenderUml() (plinko.Uml, error) {
 	uml += plinko.Uml(fmt.Sprintf("[*] -> %s \n", pd.Abs.StateDefinitions[0].State))
 
 	for _, sd := range pd.Abs.StateDefinitions {
-
 		for _, td := range sd.Triggers {
 			uml += plinko.Uml(fmt.Sprintf("%s --> %s : %s\n", sd.State, td.DestinationState, td.Name))
 		}
@@ -62,4 +61,12 @@ func (pd PlinkoDefinition) RenderUml() (plinko.Uml, error) {
 
 	uml += "@enduml"
 	return uml, nil
+}
+
+func (pd PlinkoDefinition) IterateEdges(edgeFunc func(state, destinationState plinko.State, name plinko.Trigger)) {
+	for _, sd := range pd.Abs.StateDefinitions {
+		for _, td := range sd.Triggers {
+			edgeFunc(sd.State, td.DestinationState, td.Name)
+		}
+	}
 }
