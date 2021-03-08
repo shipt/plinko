@@ -313,14 +313,18 @@ func TestCanFire(t *testing.T) {
 
 	payload := &testPayload{state: Created}
 
-	assert.True(t, psm.CanFire(context.TODO(), payload, Open))
-	assert.False(t, psm.CanFire(context.TODO(), payload, Deliver))
+	assert.Nil(t, psm.CanFire(context.TODO(), payload, Open))
+	assert.NotNil(t, psm.CanFire(context.TODO(), payload, Deliver))
 }
 
-func PermitIfPredicate(_ context.Context, p plinko.Payload, t plinko.TransitionInfo) bool {
+func PermitIfPredicate(_ context.Context, p plinko.Payload, t plinko.TransitionInfo) error {
 	tp := p.(*testPayload)
 
-	return tp.condition
+	if tp.condition {
+		return nil
+	}
+
+	return errors.New("permit failed")
 }
 
 func TestCanFireWithPermitIf(t *testing.T) {
@@ -339,10 +343,10 @@ func TestCanFireWithPermitIf(t *testing.T) {
 		state:     Created,
 		condition: true,
 	}
-	assert.True(t, psm.CanFire(context.TODO(), payload, Open))
+	assert.Nil(t, psm.CanFire(context.TODO(), payload, Open))
 
 	payload.condition = false
-	assert.False(t, psm.CanFire(context.TODO(), payload, Open))
+	assert.NotNil(t, psm.CanFire(context.TODO(), payload, Open))
 
 }
 

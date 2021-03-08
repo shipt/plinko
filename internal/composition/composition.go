@@ -68,7 +68,8 @@ func executeChain(ctx context.Context, funcs []ChainedFunctionCall, p plinko.Pay
 		for _, fn := range funcs {
 
 			if fn.Predicate != nil {
-				if !fn.Predicate(ctx, p, t) {
+				if err = fn.Predicate(ctx, p, t); err != nil {
+					// in this case, the predicate failed meaning the function should not be executed.
 					continue
 				}
 			}
