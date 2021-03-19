@@ -2,6 +2,7 @@ package composition
 
 import (
 	"context"
+	"runtime/debug"
 
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/sideeffects"
@@ -59,8 +60,9 @@ func executeChain(ctx context.Context, funcs []ChainedFunctionCall, p plinko.Pay
 	step := 0
 	defer func() {
 		if err1 := recover(); err1 != nil {
+			stack := string(debug.Stack())
 			retPayload = p
-			err = plinkoerror.CreatePlinkoPanicError(err1, t, step)
+			err = plinkoerror.CreatePlinkoPanicError(err1, t, step, stack)
 		}
 	}()
 
@@ -90,9 +92,10 @@ func executeErrorChain(ctx context.Context, funcs []ChainedErrorCall, p plinko.P
 	step := 0
 	defer func() {
 		if err1 := recover(); err1 != nil {
+			stack := string(debug.Stack())
 			retPayload = p
 			retTd = t
-			retErr = plinkoerror.CreatePlinkoPanicError(err1, t, step)
+			retErr = plinkoerror.CreatePlinkoPanicError(err1, t, step, stack)
 		}
 	}()
 
