@@ -3,6 +3,7 @@ package composition
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/shipt/plinko"
@@ -166,6 +167,7 @@ func TestChainedFunctionChainWithPanic(t *testing.T) {
 	assert.Equal(t, "panic-error", e.InnerError.Error())
 	assert.Nil(t, e.UnknownInnerError)
 	assert.Equal(t, 1, e.StepNumber)
+	assert.True(t, strings.Contains(e.Stack, "internal/composition/composition_test.go"))
 
 }
 
