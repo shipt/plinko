@@ -20,6 +20,7 @@ func CreatePlinkoPanicError(pn interface{}, t plinko.TransitionInfo, step int, s
 		TransitionInfo:    t,
 		StepNumber:        step,
 		UnknownInnerError: pn,
+		Stack:             stack,
 	}
 }
 
