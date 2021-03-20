@@ -1,14 +1,13 @@
-package dot_test
+package renderers_test
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	"github.com/shipt/plinko"
-	"github.com/shipt/plinko/internal/renderers/dot"
-	"github.com/shipt/plinko/internal/runtime"
+	"github.com/shipt/plinko/internal/renderers"
 	"github.com/shipt/plinko/pkg/config"
+	"github.com/stretchr/testify/assert"
 )
 
 const Created plinko.State = "Created"
@@ -22,7 +21,7 @@ const Returned plinko.State = "Returned"
 const NewOrder plinko.State = "NewOrder"
 
 func Test_CreateDot(t *testing.T) {
-	p := config.CreatePlinkoDefinition().(*runtime.PlinkoDefinition)
+	p := config.CreatePlinkoDefinition()
 
 	p.Configure(NewOrder).
 		Permit("Submit", "PublishedOrder").
@@ -38,7 +37,7 @@ func Test_CreateDot(t *testing.T) {
 
 	buf := bytes.NewBufferString("")
 
-	dot.New(p).Write(buf)
-
-	fmt.Println(buf.String())
+	err := p.Render(renderers.NewDot(buf))
+	assert.Nil(t, err)
+	assert.Contains(t, buf.String(), `"UnderReview" -> "PublishedOrder"[label="CompleteReview"];`)
 }

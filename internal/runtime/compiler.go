@@ -1,9 +1,11 @@
 package runtime
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/shipt/plinko"
+	"github.com/shipt/plinko/internal/renderers"
 )
 
 func (pd PlinkoDefinition) Compile() plinko.CompilerOutput {
@@ -49,24 +51,27 @@ func (pd PlinkoDefinition) RenderUml() (plinko.Uml, error) {
 		}
 	}
 
-	var uml plinko.Uml
-	uml = "@startuml\n"
-	uml += plinko.Uml(fmt.Sprintf("[*] -> %s \n", pd.Abs.StateDefinitions[0].State))
-
-	for _, sd := range pd.Abs.StateDefinitions {
-		for _, td := range sd.Triggers {
-			uml += plinko.Uml(fmt.Sprintf("%s --> %s : %s\n", sd.State, td.DestinationState, td.Name))
-		}
-	}
-
-	uml += "@enduml"
-	return uml, nil
+	b := bytes.NewBuffer([]byte{})
+	err := renderers.NewUML(b).Render(pd)
+	return plinko.Uml(b.String()), err
 }
 
-func (pd PlinkoDefinition) IterateEdges(edgeFunc func(state, destinationState plinko.State, name plinko.Trigger)) {
+func (pd PlinkoDefinition) Render(renderer plinko.Renderer) error {
+	return renderer.Render(pd)
+}
+
+// Edges implements Edges method of the plinko.Graph interface
+func (pd PlinkoDefinition) Edges(edgeFunc func(state, destinationState plinko.State, name plinko.Trigger)) {
 	for _, sd := range pd.Abs.StateDefinitions {
 		for _, td := range sd.Triggers {
 			edgeFunc(sd.State, td.DestinationState, td.Name)
 		}
+	}
+}
+
+// Nodes implements Nodes method of the plinko.Graph interface
+func (pd PlinkoDefinition) Nodes(nodeFunc func(state plinko.State)) {
+	for _, sd := range pd.Abs.StateDefinitions {
+		nodeFunc(sd.State)
 	}
 }
