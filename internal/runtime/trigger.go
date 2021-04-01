@@ -32,7 +32,7 @@ func (psm plinkoStateMachine) CanFire(ctx context.Context, payload plinko.Payloa
 	sd2 := (*psm.pd.States)[state]
 
 	if sd2 == nil {
-		return plinkoerror.CreatePlinkoStateError(state, "State '%s' not defined")
+		return plinkoerror.CreatePlinkoStateError(state, fmt.Sprintf("State '%s' not defined", state))
 	}
 
 	triggerData := sd2.Triggers[trigger]
