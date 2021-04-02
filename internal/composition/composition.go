@@ -76,7 +76,8 @@ func executeChain(ctx context.Context, funcs []ChainedFunctionCall, p plinko.Pay
 				}
 			}
 
-			p, e := fn.Operation(ctx, p, t)
+			var e error
+			p, e = fn.Operation(ctx, p, t)
 			step++
 			if e != nil {
 				return p, e

@@ -127,15 +127,19 @@ func TestChainedFunctionPassingProperly(t *testing.T) {
 				t := p.(*testPayload)
 				t.value = "foo"
 
-				return p, nil
+				return &testPayload{
+					value: "foo2",
+				}, nil
 			},
 		},
 		ChainedFunctionCall{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
 				te := p.(*testPayload)
-				assert.Equal(t, "foo", te.value)
+				assert.Equal(t, "foo2", te.value)
 
-				return p, nil
+				return &testPayload{
+					value: "foo3",
+				}, nil
 			},
 		},
 	}
@@ -144,6 +148,8 @@ func TestChainedFunctionPassingProperly(t *testing.T) {
 
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
+	tf := p.(*testPayload)
+	assert.Equal(t, "foo3", tf.value)
 }
 
 func TestChainedFunctionChainWithPanic(t *testing.T) {
