@@ -113,7 +113,9 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 }
 
 func TestChainedFunctionPassingProperly(t *testing.T) {
-	payload := &testPayload{}
+	payload := &testPayload{
+		value: "foo0",
+	}
 	transitionDef := sideeffects.TransitionDef{
 		Source:      "foo",
 		Destination: "GoodState",
@@ -124,8 +126,8 @@ func TestChainedFunctionPassingProperly(t *testing.T) {
 
 		ChainedFunctionCall{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
-				t := p.(*testPayload)
-				t.value = "foo"
+				te := p.(*testPayload)
+				assert.Equal(t, "foo0", te.value)
 
 				return &testPayload{
 					value: "foo2",
