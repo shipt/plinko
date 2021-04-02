@@ -99,7 +99,7 @@ func executeErrorChain(ctx context.Context, funcs []ChainedErrorCall, p plinko.P
 		}
 	}()
 
-	if funcs != nil && len(funcs) > 0 {
+	if len(funcs) > 0 {
 		for _, fn := range funcs {
 			var e error
 			p, e = fn.ErrorOperation(ctx, p, t, err)
