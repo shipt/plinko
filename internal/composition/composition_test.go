@@ -28,6 +28,12 @@ func TestAddEntry(t *testing.T) {
 	})
 
 	assert.Equal(t, 1, len(cd.OnEntryFn))
+
+	cd.AddEntry(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+		return pp, nil
+	})
+
+	assert.Equal(t, 2, len(cd.OnEntryFn))
 }
 
 func TestAddExit(t *testing.T) {
@@ -38,6 +44,12 @@ func TestAddExit(t *testing.T) {
 	})
 
 	assert.Equal(t, 1, len(cd.OnExitFn))
+
+	cd.AddExit(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+		return pp, nil
+	})
+
+	assert.Equal(t, 2, len(cd.OnExitFn))
 }
 
 func TestExecuteErrorChainSingleFunctionWithModifiedDestination(t *testing.T) {
