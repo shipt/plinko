@@ -20,7 +20,7 @@ steps:
   - name: test
     image: golang:1.15
     commands:
-      - go test -v ./...
+      - go test -v -coverprofile=coverage.txt ./...
 
   - name: codecov
     image: plugins/codecov
