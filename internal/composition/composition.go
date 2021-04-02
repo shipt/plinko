@@ -66,7 +66,7 @@ func executeChain(ctx context.Context, funcs []ChainedFunctionCall, p plinko.Pay
 		}
 	}()
 
-	if funcs != nil && len(funcs) > 0 {
+	if len(funcs) > 0 {
 		for _, fn := range funcs {
 
 			if fn.Predicate != nil {
@@ -75,8 +75,8 @@ func executeChain(ctx context.Context, funcs []ChainedFunctionCall, p plinko.Pay
 					continue
 				}
 			}
-
-			p, e := fn.Operation(ctx, p, t)
+			var e error
+			p, e = fn.Operation(ctx, p, t)
 			step++
 			if e != nil {
 				return p, e
@@ -101,7 +101,8 @@ func executeErrorChain(ctx context.Context, funcs []ChainedErrorCall, p plinko.P
 
 	if funcs != nil && len(funcs) > 0 {
 		for _, fn := range funcs {
-			p, e := fn.ErrorOperation(ctx, p, t, err)
+			var e error
+			p, e = fn.ErrorOperation(ctx, p, t, err)
 
 			if e != nil {
 				return p, t, e
