@@ -160,6 +160,43 @@ func TestChainedFunctionWithError(t *testing.T) {
 	assert.Equal(t, "foo", err.Error())
 }
 
+func TestChainedFunctionWithFailedPredicate(t *testing.T) {
+	payload := testPayload{
+		value: "foo",
+	}
+	transitionDef := sideeffects.TransitionDef{
+		Source:      "foo",
+		Destination: "GoodState",
+		Trigger:     "baz",
+	}
+
+	list := []ChainedFunctionCall{
+		{
+			Predicate: func(_ context.Context, _ plinko.Payload, _ plinko.TransitionInfo) error {
+				return errors.New("predicate_error")
+			},
+			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				te := p.(testPayload)
+				assert.Equal(t, "foo", te.value)
+
+				// here we'll return a new payload instance
+				te2 := testPayload{
+					value: "foo2",
+				}
+
+				return te2, nil
+			},
+		},
+	}
+
+	p, err := executeChain(context.TODO(), list, payload, transitionDef)
+	p1 := p.(testPayload)
+
+	assert.NotNil(t, p1)
+	assert.Nil(t, err)
+	assert.Equal(t, "foo", p1.value)
+}
+
 func TestChainedFunctionPassingProperly(t *testing.T) {
 	payload := testPayload{
 		value: "foo",
