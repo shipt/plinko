@@ -16,7 +16,7 @@ type testPayload struct {
 	value string
 }
 
-func (t *testPayload) GetState() plinko.State {
+func (t testPayload) GetState() plinko.State {
 	return "stub"
 }
 
@@ -113,8 +113,8 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 }
 
 func TestChainedFunctionPassingProperly(t *testing.T) {
-	payload := &testPayload{
-		value: "foo0",
+	payload := testPayload{
+		value: "foo",
 	}
 	transitionDef := sideeffects.TransitionDef{
 		Source:      "foo",
@@ -126,22 +126,26 @@ func TestChainedFunctionPassingProperly(t *testing.T) {
 
 		ChainedFunctionCall{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
-				te := p.(*testPayload)
-				assert.Equal(t, "foo0", te.value)
+				te := p.(testPayload)
+				assert.Equal(t, "foo", te.value)
 
-				return &testPayload{
+				// here we'll return a new payload instance
+				te2 := testPayload{
 					value: "foo2",
-				}, nil
+				}
+
+				return te2, nil
 			},
 		},
 		ChainedFunctionCall{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
-				te := p.(*testPayload)
+				te := p.(testPayload)
 				assert.Equal(t, "foo2", te.value)
 
-				return &testPayload{
-					value: "foo3",
-				}, nil
+				// here we'll test a mutating value
+				te.value = "foo3"
+
+				return te, nil
 			},
 		},
 	}
@@ -150,8 +154,7 @@ func TestChainedFunctionPassingProperly(t *testing.T) {
 
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
-	tf := p.(*testPayload)
-	assert.Equal(t, "foo3", tf.value)
+	assert.Equal(t, "foo3", p.(testPayload).value)
 }
 
 func TestChainedFunctionChainWithPanic(t *testing.T) {

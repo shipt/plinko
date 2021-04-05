@@ -49,6 +49,16 @@ type PlinkoDefinition interface {
 	FilteredSideEffect(SideEffectFilter, SideEffect) PlinkoDefinition
 	Compile() CompilerOutput
 	RenderUml() (Uml, error)
+	Render(Renderer) error
+}
+
+type Renderer interface {
+	Render(Graph) error
+}
+
+type Graph interface {
+	Edges(func(State, State, Trigger))
+	Nodes(func(State))
 }
 
 type Payload interface {
