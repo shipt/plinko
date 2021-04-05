@@ -36,6 +36,21 @@ func TestAddEntry(t *testing.T) {
 	assert.Equal(t, 2, len(cd.OnEntryFn))
 }
 
+func TestAddError(t *testing.T) {
+	cd := CallbackDefinitions{}
+
+	cd.AddError(func(_ context.Context, pp plinko.Payload, ti plinko.ModifiableTransitionInfo, err error) (plinko.Payload, error) {
+		return pp, err
+	})
+
+	assert.Equal(t, 1, len(cd.OnErrorFn))
+
+	cd.AddError(func(_ context.Context, pp plinko.Payload, ti plinko.ModifiableTransitionInfo, err error) (plinko.Payload, error) {
+		return pp, err
+	})
+
+	assert.Equal(t, 2, len(cd.OnErrorFn))
+}
 func TestAddExit(t *testing.T) {
 	cd := CallbackDefinitions{}
 
@@ -110,6 +125,39 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 	assert.Equal(t, 1, counter)
 	assert.Equal(t, errors.New("notwizard"), e)
 	assert.Equal(t, p, nil)
+}
+
+func TestChainedFunctionWithError(t *testing.T) {
+	payload := testPayload{
+		value: "foo",
+	}
+	transitionDef := sideeffects.TransitionDef{
+		Source:      "foo",
+		Destination: "GoodState",
+		Trigger:     "baz",
+	}
+
+	list := []ChainedFunctionCall{
+		{
+			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
+				te := p.(testPayload)
+				assert.Equal(t, "foo", te.value)
+
+				// here we'll return a new payload instance
+				te2 := testPayload{
+					value: "foo2",
+				}
+
+				return te2, errors.New("foo")
+			},
+		},
+	}
+
+	p, err := executeChain(context.TODO(), list, payload, transitionDef)
+
+	assert.NotNil(t, p)
+	assert.NotNil(t, err)
+	assert.Equal(t, "foo", err.Error())
 }
 
 func TestChainedFunctionPassingProperly(t *testing.T) {
@@ -228,4 +276,49 @@ func TestErrorFunctionChainWithPanic(t *testing.T) {
 	assert.Equal(t, "panic-error", e.InnerError.Error())
 	assert.Nil(t, e.UnknownInnerError)
 	assert.Equal(t, 0, e.StepNumber)
+}
+
+func TestExecuteErrorChain(t *testing.T) {
+	cd := CallbackDefinitions{}
+	tp := testPayload{
+		value: "foo",
+	}
+
+	p, td, e := cd.ExecuteErrorChain(context.TODO(), &tp, &sideeffects.TransitionDef{}, errors.New("foo"), 100)
+
+	p1 := p.(*testPayload)
+	assert.Equal(t, "foo", p1.value)
+	assert.NotNil(t, td)
+	assert.NotNil(t, e)
+	assert.Equal(t, "foo", e.Error())
+}
+
+func TestExecuteEntryChain(t *testing.T) {
+	cd := CallbackDefinitions{}
+	tp := &testPayload{
+		value: "foo",
+	}
+
+	p, e := cd.ExecuteEntryChain(context.TODO(), tp, nil)
+	p1 := p.(*testPayload)
+
+	assert.NotNil(t, p1)
+	assert.Nil(t, e)
+
+	assert.Equal(t, "foo", p1.value)
+}
+
+func TestExecuteExitChain(t *testing.T) {
+	cd := CallbackDefinitions{}
+	tp := &testPayload{
+		value: "foo",
+	}
+
+	p, e := cd.ExecuteExitChain(context.TODO(), tp, nil)
+	p1 := p.(*testPayload)
+
+	assert.NotNil(t, p1)
+	assert.Nil(t, e)
+
+	assert.Equal(t, "foo", p1.value)
 }
