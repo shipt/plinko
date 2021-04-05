@@ -48,7 +48,7 @@ func (cd *CallbackDefinitions) AddEntry(predicate plinko.Predicate, operation pl
 
 func (cd *CallbackDefinitions) AddExit(predicate plinko.Predicate, operation plinko.Operation) *CallbackDefinitions {
 
-	cd.OnExitFn = append(cd.OnEntryFn, ChainedFunctionCall{
+	cd.OnExitFn = append(cd.OnExitFn, ChainedFunctionCall{
 		Predicate: predicate,
 		Operation: operation,
 	})

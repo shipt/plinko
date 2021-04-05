@@ -28,6 +28,12 @@ func TestAddEntry(t *testing.T) {
 	})
 
 	assert.Equal(t, 1, len(cd.OnEntryFn))
+
+	cd.AddEntry(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+		return pp, nil
+	})
+
+	assert.Equal(t, 2, len(cd.OnEntryFn))
 }
 
 func TestAddExit(t *testing.T) {
@@ -38,6 +44,12 @@ func TestAddExit(t *testing.T) {
 	})
 
 	assert.Equal(t, 1, len(cd.OnExitFn))
+
+	cd.AddExit(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
+		return pp, nil
+	})
+
+	assert.Equal(t, 2, len(cd.OnExitFn))
 }
 
 func TestExecuteErrorChainSingleFunctionWithModifiedDestination(t *testing.T) {
@@ -101,7 +113,9 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 }
 
 func TestChainedFunctionPassingProperly(t *testing.T) {
-	payload := testPayload{}
+	payload := testPayload{
+		value: "foo",
+	}
 	transitionDef := sideeffects.TransitionDef{
 		Source:      "foo",
 		Destination: "GoodState",
@@ -112,16 +126,24 @@ func TestChainedFunctionPassingProperly(t *testing.T) {
 
 		ChainedFunctionCall{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
-				t := p.(testPayload)
-				t.value = "foo"
+				te := p.(testPayload)
+				assert.Equal(t, "foo", te.value)
 
-				return t, nil
+				// here we'll return a new payload instance
+				te2 := testPayload{
+					value: "foo2",
+				}
+
+				return te2, nil
 			},
 		},
 		ChainedFunctionCall{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
 				te := p.(testPayload)
-				assert.Equal(t, "foo", te.value)
+				assert.Equal(t, "foo2", te.value)
+
+				// here we'll test a mutating value
+				te.value = "foo3"
 
 				return te, nil
 			},
@@ -132,7 +154,7 @@ func TestChainedFunctionPassingProperly(t *testing.T) {
 
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
-	assert.Equal(t, "foo", p.(testPayload).value)
+	assert.Equal(t, "foo3", p.(testPayload).value)
 }
 
 func TestChainedFunctionChainWithPanic(t *testing.T) {
