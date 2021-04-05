@@ -84,3 +84,25 @@ func TestCallEffects(t *testing.T) {
 
 	assert.Equal(t, result, 1)
 }
+
+func TestTransitionDefinition(t *testing.T) {
+	td := TransitionDef{
+		Source:      "foo1",
+		Destination: "foo2",
+		Trigger:     "foo3",
+	}
+
+	assert.Equal(t, plinko.State("foo1"), td.GetSource())
+	assert.Equal(t, plinko.State("foo2"), td.GetDestination())
+	assert.Equal(t, plinko.Trigger("foo3"), td.GetTrigger())
+
+	td.SetDestination("foo4")
+	assert.Equal(t, plinko.State("foo4"), td.GetDestination())
+}
+
+func TestStateActionToFilterMapping(t *testing.T) {
+	assert.Equal(t, plinko.SideEffectFilter(1), getFilterDefinition(plinko.BeforeTransition))
+	assert.Equal(t, plinko.SideEffectFilter(4), getFilterDefinition(plinko.AfterTransition))
+	assert.Equal(t, plinko.SideEffectFilter(2), getFilterDefinition(plinko.BetweenStates))
+	assert.Equal(t, plinko.SideEffectFilter(0), getFilterDefinition("unknown"))
+}
