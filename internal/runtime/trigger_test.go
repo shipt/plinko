@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/shipt/plinko"
+	"github.com/shipt/plinko/plinkoerror"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,6 +69,168 @@ func TestCanFireWithPermitIf(t *testing.T) {
 
 }
 
+func TestCanFireWithNilPermitIf(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure(Created).
+		PermitIf(nil, Open, Opened)
+
+	p.Configure(Opened)
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+
+	payload := &testPayload{
+		state:     Created,
+		condition: true,
+	}
+	assert.Nil(t, psm.CanFire(context.TODO(), payload, Open))
+
+}
+
+func TransitionFn(errorOnCall bool) func(c context.Context, p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload, error) {
+	return func(c context.Context, p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload, error) {
+		if errorOnCall {
+			return p, errors.New("error")
+		}
+
+		return p, nil
+	}
+}
+func TestFireWithEntryErrorHandling(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure(Created).
+		Permit(Open, Opened).
+		Permit(Cancel, Canceled).
+		OnExit(TransitionFn(false))
+
+	p.Configure(Opened).
+		OnEntry(TransitionFn(true))
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+
+	payload := &testPayload{
+		state:     Created,
+		condition: true,
+	}
+
+	pr, err := psm.Fire(context.TODO(), payload, Open)
+	assert.NotNil(t, err)
+	assert.NotNil(t, pr)
+}
+
+func TestFireWithExitErrorHandling(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure(Created).
+		Permit(Open, Opened).
+		Permit(Cancel, Canceled).
+		OnExit(TransitionFn(true))
+
+	p.Configure(Opened).
+		OnEntry(TransitionFn(false))
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+
+	payload := &testPayload{
+		state:     Created,
+		condition: true,
+	}
+
+	pr, err := psm.Fire(context.TODO(), payload, Open)
+	assert.NotNil(t, err)
+	assert.NotNil(t, pr)
+}
+
+func TestCanFireWithInvalidStateAndTrigger(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure(Created).
+		PermitIf(PermitIfPredicate, Open, Opened)
+
+	p.Configure(Opened)
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+
+	payload := &testPayload{
+		state:     "not-a-real-state",
+		condition: true,
+	}
+	err := psm.CanFire(context.TODO(), payload, Open)
+	assert.NotNil(t, err)
+
+	var pse *plinkoerror.PlinkoStateError
+	assert.True(t, errors.As(err, &pse))
+
+	assert.Equal(t, plinko.State("not-a-real-state"), pse.State)
+
+	payload.state = Created
+	err = psm.CanFire(context.TODO(), payload, "Run")
+
+	assert.NotNil(t, err)
+
+	var pte *plinkoerror.PlinkoTriggerError
+	assert.True(t, errors.As(err, &pte))
+
+	assert.Equal(t, plinko.Trigger("Run"), pte.Trigger)
+
+	retval, err := psm.Fire(context.TODO(), payload, Open)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, retval)
+
+}
+
+func TestFireWithInvalidStateAndTrigger(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure(Created).
+		PermitIf(PermitIfPredicate, Open, Opened)
+
+	p.Configure(Opened)
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+
+	payload := &testPayload{
+		state:     "not-a-real-state",
+		condition: true,
+	}
+	p1, err := psm.Fire(context.TODO(), payload, Open)
+	assert.NotNil(t, err)
+	assert.NotNil(t, p1)
+
+	var pse *plinkoerror.PlinkoStateError
+	assert.True(t, errors.As(err, &pse))
+
+	assert.Equal(t, plinko.State("not-a-real-state"), pse.State)
+
+	payload.state = Created
+	p1, err = psm.Fire(context.TODO(), payload, "Run")
+
+	assert.NotNil(t, err)
+	assert.NotNil(t, p1)
+
+	var pte *plinkoerror.PlinkoTriggerError
+	assert.True(t, errors.As(err, &pte))
+
+	assert.Equal(t, plinko.Trigger("Run"), pte.Trigger)
+
+	retval, err := psm.Fire(context.TODO(), payload, Open)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, retval)
+
+}
 func PermitIfPredicate(_ context.Context, p plinko.Payload, t plinko.TransitionInfo) error {
 	tp := p.(*testPayload)
 
@@ -76,4 +239,35 @@ func PermitIfPredicate(_ context.Context, p plinko.Payload, t plinko.TransitionI
 	}
 
 	return errors.New("permit failed")
+}
+
+func TestEnumerateTriggers(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure(Created).
+		Permit(Open, Opened).
+		Permit(Cancel, Canceled)
+
+	p.Configure(Opened)
+	p.Configure(Canceled)
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+	payload := &testPayload{state: Created}
+	triggers, err := psm.EnumerateActiveTriggers(payload)
+
+	assert.Nil(t, err)
+
+	payload = &testPayload{state: Opened}
+	triggers, err = psm.EnumerateActiveTriggers(payload)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(triggers))
+
+	// request a state that doesn't exist in the state machine definiton and get an error thrown
+	payload = &testPayload{state: Claimed}
+	triggers, err = psm.EnumerateActiveTriggers(payload)
+
+	assert.NotNil(t, err)
 }
