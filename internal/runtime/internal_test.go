@@ -28,6 +28,9 @@ func TestStateDefinition(t *testing.T) {
 func TestStateRedeclarationPanic(t *testing.T) {
 	p := createPlinkoDefinition()
 
+	p.SideEffect(nil)
+	p.FilteredSideEffect(plinko.AllowAfterTransition, nil)
+
 	p.Configure("Open")
 	assert.Panics(t, func() { p.Configure("Open") })
 
