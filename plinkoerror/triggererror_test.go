@@ -14,8 +14,8 @@ func TestCreatePlinkoTriggerError(t *testing.T) {
 
 	if errors.As(err, &e) {
 		assert.Equal(t, plinko.Trigger("foo"), e.Trigger)
+		assert.Equal(t, "set", e.Error())
 	} else {
 		assert.Fail(t, "error not returning properly")
 	}
-
 }
