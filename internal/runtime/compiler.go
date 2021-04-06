@@ -52,7 +52,9 @@ func (pd PlinkoDefinition) RenderUml() (plinko.Uml, error) {
 	}
 
 	b := bytes.NewBuffer([]byte{})
-	err := renderers.NewUML(b).Render(pd)
+	r := renderers.NewUML(b)
+	err := pd.Render(r)
+
 	return plinko.Uml(b.String()), err
 }
 
