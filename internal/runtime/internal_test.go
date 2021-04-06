@@ -30,4 +30,10 @@ func TestStateRedeclarationPanic(t *testing.T) {
 
 	p.Configure("Open")
 	assert.Panics(t, func() { p.Configure("Open") })
+
+	assert.Panics(t, func() {
+		p.Configure("Close").
+			Permit("Go", "Open").
+			Permit("Go", "Open")
+	})
 }
