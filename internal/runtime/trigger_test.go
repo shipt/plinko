@@ -132,7 +132,10 @@ func TestFireWithExitErrorHandling(t *testing.T) {
 		OnExit(TransitionFn(true))
 
 	p.Configure(Opened).
-		OnEntry(TransitionFn(false))
+		OnEntry(TransitionFn(false)).
+		OnTriggerEntry(Open, nil).
+		OnError(nil).
+		OnTriggerExit(Cancel, nil)
 
 	co := p.Compile()
 
