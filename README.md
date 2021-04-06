@@ -1,6 +1,6 @@
 # Plinko - a Stateless State Machine for Go
 
-[![Build Status](https://drone.shipttech.com/api/badges/shipt/plinko/status.svg?ref=refs/heads/main)](https://drone.shipttech.com/shipt/plinko)
+[![Build Status](https://drone.shipt.com/api/badges/shipt/plinko/status.svg)](https://drone.shipt.com/shipt/plinko) [![codecov](https://codecov.io/gh/shipt/plinko/branch/main/graph/badge.svg?token=8UX649KGGV)](https://codecov.io/gh/shipt/plinko) Build Status
 
 The project, as well as the example below, are inspired by the [Erlang stateless State Machine](https://erlang.org/doc/design_principles/statem.html) and [Stateless project](https://github.com/dotnet-state-machine/stateless) implementations along with the [Tinder State Machine](https://github.com/Tinder/StateMachine).  The goal is to create the fastest state machine that can be reused across many entities with the least amount of overhead in the process.
 
