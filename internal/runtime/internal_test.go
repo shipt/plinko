@@ -24,3 +24,10 @@ func TestStateDefinition(t *testing.T) {
 	})
 
 }
+
+func TestStateRedeclarationPanic(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure("Open")
+	assert.Panics(t, func() { p.Configure("Open") })
+}
