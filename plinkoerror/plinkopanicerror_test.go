@@ -14,10 +14,10 @@ func TestPanicErrorCreate(t *testing.T) {
 		defer func() {
 			if err1 := recover(); err1 != nil {
 				stack := string(debug.Stack())
-				retErr = CreatePlinkoPanicError(err1, nil, 0, stack)
+				retErr = CreatePlinkoPanicError(err1, nil, 0, "name", stack)
 			} else {
 				stack := string(debug.Stack())
-				retErr = CreatePlinkoPanicError(nil, nil, 0, stack)
+				retErr = CreatePlinkoPanicError(nil, nil, 0, "name", stack)
 			}
 		}()
 
@@ -36,10 +36,10 @@ func TestPanicErrorCreateWithNilError(t *testing.T) {
 		defer func() {
 			if err1 := recover(); err1 != nil {
 				stack := string(debug.Stack())
-				retErr = CreatePlinkoPanicError(err1, nil, 0, stack)
+				retErr = CreatePlinkoPanicError(err1, nil, 0, "name", stack)
 			} else {
 				stack := string(debug.Stack())
-				retErr = CreatePlinkoPanicError(nil, nil, 0, stack)
+				retErr = CreatePlinkoPanicError(nil, nil, 0, "name", stack)
 			}
 		}()
 

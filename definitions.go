@@ -1,6 +1,8 @@
 package plinko
 
-import "context"
+import (
+	"context"
+)
 
 type State string
 type Trigger string

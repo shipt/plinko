@@ -62,18 +62,19 @@ func (cd *CallbackDefinitions) AddExit(predicate plinko.Predicate, operation pli
 }
 
 func executeChain(ctx context.Context, funcs []ChainedFunctionCall, p plinko.Payload, t plinko.TransitionInfo) (retPayload plinko.Payload, err error) {
+	var stepName string
 	step := 0
 	defer func() {
 		if err1 := recover(); err1 != nil {
 			stack := string(debug.Stack())
 			retPayload = p
-			err = plinkoerror.CreatePlinkoPanicError(err1, t, step, stack)
+			err = plinkoerror.CreatePlinkoPanicError(err1, t, step, stepName, stack)
 		}
 	}()
 
 	if len(funcs) > 0 {
 		for _, fn := range funcs {
-
+			stepName = fn.Config.Name
 			if fn.Predicate != nil {
 				if err = fn.Predicate(ctx, p, t); err != nil {
 					// in this case, the predicate failed meaning the function should not be executed.
@@ -94,18 +95,20 @@ func executeChain(ctx context.Context, funcs []ChainedFunctionCall, p plinko.Pay
 }
 
 func executeErrorChain(ctx context.Context, funcs []ChainedErrorCall, p plinko.Payload, t *sideeffects.TransitionDef, err error) (retPayload plinko.Payload, retTd *sideeffects.TransitionDef, retErr error) {
+	var stepName string
 	step := 0
 	defer func() {
 		if err1 := recover(); err1 != nil {
 			stack := string(debug.Stack())
 			retPayload = p
 			retTd = t
-			retErr = plinkoerror.CreatePlinkoPanicError(err1, t, step, stack)
+			retErr = plinkoerror.CreatePlinkoPanicError(err1, t, step, stepName, stack)
 		}
 	}()
 
 	if len(funcs) > 0 {
 		for _, fn := range funcs {
+			stepName = fn.Config.Name
 			var e error
 			p, e = fn.ErrorOperation(ctx, p, t, err)
 
