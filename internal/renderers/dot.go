@@ -22,8 +22,8 @@ func NewDot(w io.Writer) *Dot {
 
 func (d *Dot) Render(graph plinko.Graph) error {
 	d.beginGraph()
-	graph.Nodes(func(state plinko.State) {
-		d.node(string(state))
+	graph.Nodes(func(state plinko.State, info plinko.StateConfig) {
+		d.node(string(state), info.Name, info.Description)
 	})
 	graph.Edges(func(state, destinationState plinko.State, name plinko.Trigger) {
 		d.edge(string(state), string(destinationState), string(name))
@@ -48,8 +48,8 @@ func (d *Dot) edge(a, b, label string) {
 	d.write([]byte(fmt.Sprintf(d.style.templates.edge, a, b, label)))
 }
 
-func (d *Dot) node(label string) {
-	d.write([]byte(fmt.Sprintf(d.style.templates.node, label, label)))
+func (d *Dot) node(name, label, description string) {
+	d.write([]byte(fmt.Sprintf(d.style.templates.node, name, label, description)))
 }
 
 //DotFileToImg runs the dot command to convert a dot file into an image file
@@ -88,7 +88,7 @@ start=1251;
 		edge:  "edge [constraint=true, fontname = \"sans-serif\"];\n",
 	},
 	templates: dotTemplates{
-		node: `"%s" [label=<<TABLE STYLE="ROUNDED" BGCOLOR="orange" BORDER="1" CELLSPACING="0" WIDTH="20"><TR><TD BORDER="0">%s</TD></TR></TABLE>>];` + "\n",
+		node: `"%s" [label=<<TABLE STYLE="ROUNDED" BGCOLOR="orange" BORDER="1" CELLSPACING="0" WIDTH="20"><TR><TD BORDER="0">%s</TD></TR><TR><TD BORDER="1" SIDES="t">%s</TD></TR></TABLE>>];` + "\n",
 		edge: "\"%s\" -> \"%s\"[label=\"%s\"];\n",
 	},
 }
