@@ -12,10 +12,12 @@ import (
 type ChainedFunctionCall struct {
 	Predicate plinko.Predicate
 	Operation plinko.Operation
+	Config    plinko.OperationConfig
 }
 
 type ChainedErrorCall struct {
 	ErrorOperation plinko.ErrorOperation
+	Config         plinko.OperationConfig
 }
 
 type CallbackDefinitions struct {
@@ -27,30 +29,33 @@ type CallbackDefinitions struct {
 	ExitFunctionChain  []string
 }
 
-func (cd *CallbackDefinitions) AddError(errorOperation plinko.ErrorOperation) *CallbackDefinitions {
+func (cd *CallbackDefinitions) AddError(errorOperation plinko.ErrorOperation, cfg plinko.OperationConfig) *CallbackDefinitions {
 	cd.OnErrorFn = append(cd.OnErrorFn, ChainedErrorCall{
 		ErrorOperation: errorOperation,
+		Config:         cfg,
 	})
 
 	return cd
 }
 
-func (cd *CallbackDefinitions) AddEntry(predicate plinko.Predicate, operation plinko.Operation) *CallbackDefinitions {
+func (cd *CallbackDefinitions) AddEntry(predicate plinko.Predicate, operation plinko.Operation, cfg plinko.OperationConfig) *CallbackDefinitions {
 
 	cd.OnEntryFn = append(cd.OnEntryFn, ChainedFunctionCall{
 		Predicate: predicate,
 		Operation: operation,
+		Config:    cfg,
 	})
 
 	return cd
 
 }
 
-func (cd *CallbackDefinitions) AddExit(predicate plinko.Predicate, operation plinko.Operation) *CallbackDefinitions {
+func (cd *CallbackDefinitions) AddExit(predicate plinko.Predicate, operation plinko.Operation, cfg plinko.OperationConfig) *CallbackDefinitions {
 
 	cd.OnExitFn = append(cd.OnExitFn, ChainedFunctionCall{
 		Predicate: predicate,
 		Operation: operation,
+		Config:    cfg,
 	})
 
 	return cd

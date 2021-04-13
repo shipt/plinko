@@ -12,13 +12,13 @@ type ErrorOperation func(context.Context, Payload, ModifiableTransitionInfo, err
 
 type StateDefinition interface {
 	//State() string
-	OnEntry(Operation) StateDefinition
-	OnTriggerEntry(Trigger, Operation) StateDefinition
-	OnExit(Operation) StateDefinition
-	OnTriggerExit(Trigger, Operation) StateDefinition
+	OnEntry(Operation, ...OperationOption) StateDefinition
+	OnError(ErrorOperation, ...OperationOption) StateDefinition
+	OnExit(Operation, ...OperationOption) StateDefinition
+	OnTriggerEntry(Trigger, Operation, ...OperationOption) StateDefinition
+	OnTriggerExit(Trigger, Operation, ...OperationOption) StateDefinition
 	Permit(Trigger, State) StateDefinition
 	PermitIf(Predicate, Trigger, State) StateDefinition
-	OnError(ErrorOperation) StateDefinition
 	//TBD: AllowReentrance by request, not default
 }
 
@@ -100,3 +100,9 @@ type CompilerOutput struct {
 	StateMachine StateMachine
 	Messages     []CompilerMessage
 }
+
+type OperationConfig struct {
+	Name string
+}
+
+type OperationOption func(c *OperationConfig)
