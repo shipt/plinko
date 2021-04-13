@@ -25,13 +25,13 @@ func TestAddEntry(t *testing.T) {
 
 	cd.AddEntry(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 		return pp, nil
-	})
+	}, plinko.OperationConfig{})
 
 	assert.Equal(t, 1, len(cd.OnEntryFn))
 
 	cd.AddEntry(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 		return pp, nil
-	})
+	}, plinko.OperationConfig{})
 
 	assert.Equal(t, 2, len(cd.OnEntryFn))
 }
@@ -41,13 +41,13 @@ func TestAddError(t *testing.T) {
 
 	cd.AddError(func(_ context.Context, pp plinko.Payload, ti plinko.ModifiableTransitionInfo, err error) (plinko.Payload, error) {
 		return pp, err
-	})
+	}, plinko.OperationConfig{})
 
 	assert.Equal(t, 1, len(cd.OnErrorFn))
 
 	cd.AddError(func(_ context.Context, pp plinko.Payload, ti plinko.ModifiableTransitionInfo, err error) (plinko.Payload, error) {
 		return pp, err
-	})
+	}, plinko.OperationConfig{})
 
 	assert.Equal(t, 2, len(cd.OnErrorFn))
 }
@@ -56,13 +56,13 @@ func TestAddExit(t *testing.T) {
 
 	cd.AddExit(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 		return pp, nil
-	})
+	}, plinko.OperationConfig{})
 
 	assert.Equal(t, 1, len(cd.OnExitFn))
 
 	cd.AddExit(nil, func(_ context.Context, pp plinko.Payload, transitionInfo plinko.TransitionInfo) (plinko.Payload, error) {
 		return pp, nil
-	})
+	}, plinko.OperationConfig{})
 
 	assert.Equal(t, 2, len(cd.OnExitFn))
 }

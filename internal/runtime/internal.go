@@ -18,6 +18,7 @@ type plinkoStateMachine struct {
 type InternalStateDefinition struct {
 	State    plinko.State
 	Triggers map[plinko.Trigger]*TriggerDefinition
+	info     plinko.StateConfig
 
 	Callbacks *composition.CallbackDefinitions
 
@@ -25,18 +26,18 @@ type InternalStateDefinition struct {
 }
 
 func (sd InternalStateDefinition) OnEntry(entryFn plinko.Operation, opts ...plinko.OperationOption) plinko.StateDefinition {
-	sd.Callbacks.AddEntry(nil, entryFn, newOpConfig(entryFn, opts...))
+	sd.Callbacks.AddEntry(nil, entryFn, newOperationConfig(entryFn, opts...))
 
 	return sd
 }
 
 func (sd InternalStateDefinition) OnError(errorFn plinko.ErrorOperation, opts ...plinko.OperationOption) plinko.StateDefinition {
-	sd.Callbacks.AddError(errorFn, newOpConfig(errorFn, opts...))
+	sd.Callbacks.AddError(errorFn, newOperationConfig(errorFn, opts...))
 	return sd
 }
 
 func (sd InternalStateDefinition) OnExit(exitFn plinko.Operation, opts ...plinko.OperationOption) plinko.StateDefinition {
-	sd.Callbacks.AddExit(nil, exitFn, newOpConfig(exitFn, opts...))
+	sd.Callbacks.AddExit(nil, exitFn, newOperationConfig(exitFn, opts...))
 
 	return sd
 }
@@ -48,7 +49,7 @@ func (sd InternalStateDefinition) OnTriggerEntry(trigger plinko.Trigger, entryFn
 		}
 
 		return fmt.Errorf("trigger '%s' not found for entry", trigger)
-	}, entryFn, newOpConfig(entryFn, opts...))
+	}, entryFn, newOperationConfig(entryFn, opts...))
 
 	return sd
 
@@ -61,7 +62,7 @@ func (sd InternalStateDefinition) OnTriggerExit(trigger plinko.Trigger, exitFn p
 		}
 
 		return fmt.Errorf("trigger '%s' not found for exit", trigger)
-	}, exitFn, newOpConfig(exitFn, opts...))
+	}, exitFn, newOperationConfig(exitFn, opts...))
 
 	return sd
 }
@@ -112,7 +113,7 @@ func (pd *PlinkoDefinition) FilteredSideEffect(filter plinko.SideEffectFilter, s
 	return pd
 }
 
-func (pd *PlinkoDefinition) Configure(state plinko.State) plinko.StateDefinition {
+func (pd *PlinkoDefinition) Configure(state plinko.State, opts ...plinko.StateOption) plinko.StateDefinition {
 	if _, ok := (*pd.States)[state]; ok {
 		panic(fmt.Sprintf("State: %s - has already been defined, plinko configuration invalid.", state))
 	}
@@ -124,6 +125,7 @@ func (pd *PlinkoDefinition) Configure(state plinko.State) plinko.StateDefinition
 		Triggers:  make(map[plinko.Trigger]*TriggerDefinition),
 		Abs:       &pd.Abs,
 		Callbacks: &cbd,
+		info:      newStateConfig(state, opts...),
 	}
 
 	(*pd.States)[state] = &sd
@@ -162,7 +164,7 @@ func addPermit(sd *InternalStateDefinition, trigger plinko.Trigger, destination 
 	sd.Abs.TriggerDefinitions = append(sd.Abs.TriggerDefinitions, td)
 }
 
-func newOpConfig(op interface{}, opts ...plinko.OperationOption) plinko.OperationConfig {
+func newOperationConfig(op interface{}, opts ...plinko.OperationOption) plinko.OperationConfig {
 	c := plinko.OperationConfig{
 		Name: getFunctionName(op),
 	}
@@ -176,4 +178,16 @@ func newOpConfig(op interface{}, opts ...plinko.OperationOption) plinko.Operatio
 
 func getFunctionName(i interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+}
+
+func newStateConfig(state plinko.State, opts ...plinko.StateOption) plinko.StateConfig {
+	c := plinko.StateConfig{
+		Name: string(state),
+	}
+
+	for _, opt := range opts {
+		opt(&c)
+	}
+
+	return c
 }

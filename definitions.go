@@ -44,7 +44,7 @@ type ModifiableTransitionInfo interface {
 type SideEffect func(context.Context, StateAction, Payload, TransitionInfo, int64)
 
 type PlinkoDefinition interface {
-	Configure(State) StateDefinition
+	Configure(State, ...StateOption) StateDefinition
 	SideEffect(SideEffect) PlinkoDefinition
 	FilteredSideEffect(SideEffectFilter, SideEffect) PlinkoDefinition
 	Compile() CompilerOutput
@@ -58,7 +58,7 @@ type Renderer interface {
 
 type Graph interface {
 	Edges(func(State, State, Trigger))
-	Nodes(func(State))
+	Nodes(func(State, StateConfig))
 }
 
 type Payload interface {
@@ -106,3 +106,10 @@ type OperationConfig struct {
 }
 
 type OperationOption func(c *OperationConfig)
+
+type StateConfig struct {
+	Name        string
+	Description string
+}
+
+type StateOption func(c *StateConfig)
