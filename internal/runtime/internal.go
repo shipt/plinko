@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
+	"strings"
 
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/composition"
@@ -26,9 +27,79 @@ type InternalStateDefinition struct {
 }
 
 func (sd InternalStateDefinition) OnEntry(entryFn plinko.Operation, opts ...plinko.OperationOption) plinko.StateDefinition {
+	if opts == nil {
+		opts = append(opts, func(c *plinko.OperationConfig) {
+			c.Name = getCallerHelper(entryFn)
+		})
+	}
+
 	sd.Callbacks.AddEntry(nil, entryFn, newOperationConfig(entryFn, opts...))
 
 	return sd
+}
+
+func getCallerHelper(f interface{}) string {
+	pc := make([]uintptr, 15)
+	n := runtime.Callers(2, pc)
+	frames := runtime.CallersFrames(pc[:n])
+
+	fnName := nameOf(f)
+
+	return checkCallstack(frames, fnName)
+}
+
+func checkCallstack(frames *runtime.Frames, functionName string) string {
+	if frames == nil {
+		return functionName
+	}
+
+	for frame, more := frames.Next(); more == true; frame, more = frames.Next() {
+		list := strings.Split(frame.Function, ".")
+
+		if len(list) > 0 && list[len(list)-1] == functionName {
+			return fmt.Sprintf("%s:%d", cleanFileName(frame.File), frame.Line)
+		}
+
+	}
+
+	return functionName
+}
+
+func cleanFileName(fileName string) string {
+	// don't expose the full file path, at most 2 folders down
+
+	paths := strings.Split(fileName, "/")
+
+	if paths == nil || len(paths) < 3 {
+		return fileName
+	}
+
+	return strings.Join(paths[len(paths)-3:], "/")
+
+}
+
+func nameOf(f interface{}) string {
+	// as a rule of thumb for security, exposing a full package name to logs or the caller is
+	// is a threat vector.  So dropping all but the last name in the package path.
+	v := reflect.ValueOf(f)
+	if v.Kind() == reflect.Func {
+		if rf := runtime.FuncForPC(v.Pointer()); rf != nil {
+			name := rf.Name()
+
+			names := strings.Split(name, ".")
+
+			if len(names) > 1 {
+				name = names[len(names)-1]
+
+				if name == "func1" {
+					name = names[len(names)-2]
+				}
+			}
+
+			return name
+		}
+	}
+	return "anonymous_function:" + v.String()
 }
 
 func (sd InternalStateDefinition) OnError(errorFn plinko.ErrorOperation, opts ...plinko.OperationOption) plinko.StateDefinition {
