@@ -6,11 +6,12 @@ import (
 	"github.com/shipt/plinko"
 )
 
-func CreatePlinkoPanicError(pn interface{}, t plinko.TransitionInfo, step int, stack string) error {
+func CreatePlinkoPanicError(pn interface{}, t plinko.TransitionInfo, step int, name string, stack string) error {
 	if err, ok := pn.(error); ok {
 		return &PlinkoPanicError{
 			TransitionInfo: t,
 			StepNumber:     step,
+			StepName:       name,
 			InnerError:     err,
 			Stack:          stack,
 		}
@@ -19,6 +20,7 @@ func CreatePlinkoPanicError(pn interface{}, t plinko.TransitionInfo, step int, s
 	return &PlinkoPanicError{
 		TransitionInfo:    t,
 		StepNumber:        step,
+		StepName:          name,
 		UnknownInnerError: pn,
 		Stack:             stack,
 	}
@@ -27,6 +29,7 @@ func CreatePlinkoPanicError(pn interface{}, t plinko.TransitionInfo, step int, s
 type PlinkoPanicError struct {
 	plinko.TransitionInfo
 	StepNumber        int
+	StepName          string
 	InnerError        error
 	UnknownInnerError interface{}
 	Stack             string

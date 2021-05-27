@@ -7,6 +7,7 @@ import (
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/renderers"
 	"github.com/shipt/plinko/pkg/config"
+	"github.com/shipt/plinko/pkg/config/state"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +24,7 @@ const NewOrder plinko.State = "NewOrder"
 func Test_CreateDot(t *testing.T) {
 	p := config.CreatePlinkoDefinition()
 
-	p.Configure(NewOrder).
+	p.Configure(NewOrder, state.WithName("Very much new order"), state.WithDescription("Where it all begins")).
 		Permit("Submit", "PublishedOrder").
 		Permit("Review", "UnderReview")
 
@@ -40,4 +41,6 @@ func Test_CreateDot(t *testing.T) {
 	err := p.Render(renderers.NewDot(buf))
 	assert.Nil(t, err)
 	assert.Contains(t, buf.String(), `"UnderReview" -> "PublishedOrder"[label="CompleteReview"];`)
+	assert.Contains(t, buf.String(), `Very much new order`)
+	assert.Contains(t, buf.String(), `Where it all begins`)
 }

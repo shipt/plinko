@@ -8,7 +8,9 @@ import (
 
 	"github.com/shipt/plinko"
 	"github.com/shipt/plinko/internal/runtime"
+	"github.com/shipt/plinko/pkg/config/operation"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const Created plinko.State = "Created"
@@ -490,4 +492,41 @@ func TestStateMachineErrorHandling(t *testing.T) {
 
 	assert.Equal(t, 2, transitionVisitCount)
 
+}
+
+func panickingTestOperation(c context.Context, p plinko.Payload, ti plinko.TransitionInfo) (plinko.Payload, error) {
+	panic(errors.New("panics as intended"))
+}
+
+func TestStateMachinePanicSuppression(t *testing.T) {
+	const StateA plinko.State = "TransA"
+	const StateB plinko.State = "TransB"
+	const StateC plinko.State = "TransC"
+	const TransitionAB plinko.Trigger = "TransAB"
+	const TransitionAC plinko.Trigger = "TransAC"
+	p := CreatePlinkoDefinition()
+
+	p.Configure(StateA).
+		Permit(TransitionAB, StateB).
+		Permit(TransitionAC, StateC)
+
+	p.Configure(StateB).
+		OnEntry(panickingTestOperation)
+
+	p.Configure(StateC).
+		OnEntry(func(c context.Context, p plinko.Payload, ti plinko.TransitionInfo) (plinko.Payload, error) {
+			panic(errors.New("panics as intended"))
+		}, operation.WithName("overridden function name"))
+
+	psm := p.Compile().StateMachine
+
+	_, e := psm.Fire(context.TODO(), &testPayload{state: StateA}, TransitionAB)
+
+	require.Error(t, e)
+	assert.Contains(t, e.Error(), "panickingTestOperation")
+
+	_, e = psm.Fire(context.TODO(), &testPayload{state: StateA}, TransitionAC)
+
+	require.Error(t, e)
+	assert.Contains(t, e.Error(), "overridden function name")
 }

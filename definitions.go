@@ -1,6 +1,8 @@
 package plinko
 
-import "context"
+import (
+	"context"
+)
 
 type State string
 type Trigger string
@@ -12,13 +14,13 @@ type ErrorOperation func(context.Context, Payload, ModifiableTransitionInfo, err
 
 type StateDefinition interface {
 	//State() string
-	OnEntry(Operation) StateDefinition
-	OnTriggerEntry(Trigger, Operation) StateDefinition
-	OnExit(Operation) StateDefinition
-	OnTriggerExit(Trigger, Operation) StateDefinition
+	OnEntry(Operation, ...OperationOption) StateDefinition
+	OnError(ErrorOperation, ...OperationOption) StateDefinition
+	OnExit(Operation, ...OperationOption) StateDefinition
+	OnTriggerEntry(Trigger, Operation, ...OperationOption) StateDefinition
+	OnTriggerExit(Trigger, Operation, ...OperationOption) StateDefinition
 	Permit(Trigger, State) StateDefinition
 	PermitIf(Predicate, Trigger, State) StateDefinition
-	OnError(ErrorOperation) StateDefinition
 	//TBD: AllowReentrance by request, not default
 }
 
@@ -44,7 +46,7 @@ type ModifiableTransitionInfo interface {
 type SideEffect func(context.Context, StateAction, Payload, TransitionInfo, int64)
 
 type PlinkoDefinition interface {
-	Configure(State) StateDefinition
+	Configure(State, ...StateOption) StateDefinition
 	SideEffect(SideEffect) PlinkoDefinition
 	FilteredSideEffect(SideEffectFilter, SideEffect) PlinkoDefinition
 	Compile() CompilerOutput
@@ -58,7 +60,7 @@ type Renderer interface {
 
 type Graph interface {
 	Edges(func(State, State, Trigger))
-	Nodes(func(State))
+	Nodes(func(State, StateConfig))
 }
 
 type Payload interface {
@@ -100,3 +102,16 @@ type CompilerOutput struct {
 	StateMachine StateMachine
 	Messages     []CompilerMessage
 }
+
+type OperationConfig struct {
+	Name string
+}
+
+type OperationOption func(c *OperationConfig)
+
+type StateConfig struct {
+	Name        string
+	Description string
+}
+
+type StateOption func(c *StateConfig)

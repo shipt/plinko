@@ -72,8 +72,8 @@ func (pd PlinkoDefinition) Edges(edgeFunc func(state, destinationState plinko.St
 }
 
 // Nodes implements Nodes method of the plinko.Graph interface
-func (pd PlinkoDefinition) Nodes(nodeFunc func(state plinko.State)) {
+func (pd PlinkoDefinition) Nodes(nodeFunc func(state plinko.State, StateConfig plinko.StateConfig)) {
 	for _, sd := range pd.Abs.StateDefinitions {
-		nodeFunc(sd.State)
+		nodeFunc(sd.State, sd.info)
 	}
 }
