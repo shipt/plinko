@@ -21,7 +21,7 @@ type StateDefinition interface {
 	OnTriggerExit(Trigger, Operation, ...OperationOption) StateDefinition
 	Permit(Trigger, State) StateDefinition
 	PermitIf(Predicate, Trigger, State) StateDefinition
-	//TBD: AllowReentrance by request, not default
+	PermitReentry(Trigger) StateDefinition
 }
 
 type StateMachine interface {

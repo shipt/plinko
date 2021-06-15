@@ -138,6 +138,12 @@ func (sd InternalStateDefinition) OnTriggerExit(trigger plinko.Trigger, exitFn p
 	return sd
 }
 
+func (sd InternalStateDefinition) PermitReentry(trigger plinko.Trigger) plinko.StateDefinition {
+	addPermit(&sd, trigger, sd.State, nil)
+
+	return sd
+}
+
 func (sd InternalStateDefinition) Permit(trigger plinko.Trigger, destinationState plinko.State) plinko.StateDefinition {
 	addPermit(&sd, trigger, destinationState, nil)
 
