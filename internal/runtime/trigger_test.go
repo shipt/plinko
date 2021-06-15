@@ -95,7 +95,10 @@ func TransitionFn(errorOnCall bool) func(c context.Context, p plinko.Payload, t 
 			return p, errors.New("error")
 		}
 
-		return p, nil
+		v := p.(*testPayload)
+		v.state = t.GetDestination()
+
+		return v, nil
 	}
 }
 func TestFireWithEntryErrorHandling(t *testing.T) {
@@ -121,6 +124,30 @@ func TestFireWithEntryErrorHandling(t *testing.T) {
 	pr, err := psm.Fire(context.TODO(), payload, Open)
 	assert.NotNil(t, err)
 	assert.NotNil(t, pr)
+}
+
+func TestFireWithReentrancy(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure(Created).
+		PermitReentry(Open).
+		PermitReentry(Cancel).
+		OnExit(TransitionFn(false))
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+
+	payload := &testPayload{
+		state:     Created,
+		condition: true,
+	}
+
+	pr, err := psm.Fire(context.TODO(), payload, Open)
+	assert.Nil(t, err)
+	assert.NotNil(t, pr)
+
+	assert.Equal(t, Created, pr.GetState())
 }
 
 func TestFireWithExitErrorHandling(t *testing.T) {
