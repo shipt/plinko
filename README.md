@@ -1,13 +1,13 @@
-# Plinko - a Stateless State Machine for Go
+# Plinko - a Fluent State Machine for Go
 
 [![Build Status](https://drone.shipt.com/api/badges/shipt/plinko/status.svg)](https://drone.shipt.com/shipt/plinko) [![codecov](https://codecov.io/gh/shipt/plinko/branch/main/graph/badge.svg?token=8UX649KGGV)](https://codecov.io/gh/shipt/plinko) Build Status
 
 The project, as well as the example below, are inspired by the [Erlang stateless State Machine](https://erlang.org/doc/design_principles/statem.html) and [Stateless project](https://github.com/dotnet-state-machine/stateless) implementations. The goal is to create the fastest state machine that can be reused across many entities with the least amount of overhead in the process.
 
-## Why Stateless
-Most state machine implementations keep track of an in-memory state during the running of an application. This makes sense for desktop applications or games where the journey of that state is critical to the user-facing process, but that doesn't map well to a service that is shepherding things like Orders and Products that number in the thousands-to-millions on any given day.
+## Why State Machines?
+Some state machine implementations keep track of an in-memory state during the running of an application. This makes sense for desktop applications or games where the journey of that state is critical to the user-facing process, but that doesn't map well to web services shepherding things like Orders and Products that number in the thousands-to-millions on any given day.
 
-Stateless State Machines are simply the extraction of the state from the mechanics of state transition.  This allows the state machine to be reduced to a simple data structure, and enables the cost of wiring up the machine to happen only once.  In turn, the state machine can shared across multiple threads and executed concurrently without interference between discrete runs.
+This allows the state machine to be reduced to a simple data structure, and enables the cost of wiring up the machine to happen only once but reused multiple times.  In turn, the state machine can be shared across multiple threads and executed concurrently without interference between discrete runs.
 
 There are a number of good articles on this front, there are a couple that focus on state design from the [esoteric around soundness of the design](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State) to the more [functional programming based definition of a state machine](https://hexdocs.pm/as_fsm/readme.html).
 
@@ -28,6 +28,22 @@ Some useful extensions are also provided:
 * Pushes state external to the structure - instantiate once, use many times.
 * Reentrant states
 * Export to PlantUML
+
+# Installing 
+
+Using Plinko is easy.   First, use `go get` to istall the latest version of the library.  This command will install everything you need - in fact, one design goal of Plinko is to minimize dependencies.  There are no runtime dependencies required for Plinko, and the only dependencies used by the project are used for unit testing.
+
+```go
+go get -u github.com/shipt/plinko`
+```
+
+Next, include Plinko in your application:
+
+```go
+  import "github.com/shipt/plinko"
+```
+
+You will define state machine using the examples below, and compiling the state machine once to reuse again and again.  Efficiency is front of mind,  meaning the compilation process is fast and runs in far less than 1/10,000th of a second on a reasonable VM. Or, given a single thread on an x86 processor, a statemachine can be fully compiled and ready to run more than 1,000,000 times a second.  In other words, start up time won't be an issue.
 
 # Introspection
 The state machine can provide a list of triggers for a given state to provide simple access to the list of triggers for any state.
@@ -284,13 +300,13 @@ State Machine error handling follows the same pattern that we see in golang in g
 
 While the `OnEntry` and `OnExit` function definitions take a `TransitionInfo` parameter that is immutable, and error operation is defined with a `ModifiableTransitionInfo` interface that allows the function to change the `DestinationState`.  In addition, the function also accepts the error raised during the `On[Entry|Exit]` operation so it can be interrogated when necessary.  The definition of an error operation handler looks like this:
 
-```golang
+```go
  ErrorOperation func(Payload, ModifiableTransitionInfo, error) (Payload, error)
 ```
 
 An ErrorOperation function implements this signature and tests the error case.  Here is an example where we redirect based on a match.
 
-```golang
+```go
 func RedirectOnDeactivatedCustomer(p Payload, m ModifiableTransitionInfo, e error) (Payload, error) {
 	if e == DeactivatedCustomerError {
 		m.SetDestination(DeactivatedTriage)
