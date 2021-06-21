@@ -22,6 +22,7 @@ type StateDefinition interface {
 	Permit(Trigger, State) StateDefinition
 	PermitIf(Predicate, Trigger, State) StateDefinition
 	PermitReentry(Trigger) StateDefinition
+	PermitReentryIf(Predicate, Trigger) StateDefinition
 }
 
 type StateMachine interface {

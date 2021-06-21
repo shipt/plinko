@@ -150,6 +150,60 @@ func TestFireWithReentrancy(t *testing.T) {
 	assert.Equal(t, Created, pr.GetState())
 }
 
+func TestFireWithReentrancyConditional(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure(Created).
+		PermitReentryIf(func(_ context.Context, p plinko.Payload, t plinko.TransitionInfo) error {
+
+			return nil
+		}, Open).
+		PermitReentry(Cancel).
+		OnExit(TransitionFn(false))
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+
+	payload := &testPayload{
+		state:     Created,
+		condition: true,
+	}
+
+	pr, err := psm.Fire(context.TODO(), payload, Open)
+	assert.Nil(t, err)
+	assert.NotNil(t, pr)
+
+	assert.Equal(t, Created, pr.GetState())
+}
+
+func TestFireWithReentrancyConditionalFalse(t *testing.T) {
+	p := createPlinkoDefinition()
+
+	p.Configure(Created).
+		PermitReentryIf(func(_ context.Context, p plinko.Payload, t plinko.TransitionInfo) error {
+
+			return errors.New("can't do that")
+		}, Open).
+		PermitReentry(Cancel).
+		OnExit(TransitionFn(false))
+
+	co := p.Compile()
+
+	psm := co.StateMachine
+
+	payload := &testPayload{
+		state:     Created,
+		condition: true,
+	}
+
+	pr, err := psm.Fire(context.TODO(), payload, Open)
+	assert.Nil(t, err)
+	assert.NotNil(t, pr)
+
+	assert.Equal(t, Created, pr.GetState())
+}
+
 func TestFireWithExitErrorHandling(t *testing.T) {
 	p := createPlinkoDefinition()
 

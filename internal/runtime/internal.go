@@ -144,6 +144,12 @@ func (sd InternalStateDefinition) PermitReentry(trigger plinko.Trigger) plinko.S
 	return sd
 }
 
+func (sd InternalStateDefinition) PermitReentryIf(predicate plinko.Predicate, trigger plinko.Trigger) plinko.StateDefinition {
+	addPermit(&sd, trigger, sd.State, predicate)
+
+	return sd
+}
+
 func (sd InternalStateDefinition) Permit(trigger plinko.Trigger, destinationState plinko.State) plinko.StateDefinition {
 	addPermit(&sd, trigger, destinationState, nil)
 
