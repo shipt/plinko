@@ -145,11 +145,27 @@ In this case, I define the trigger differently with:
 
 ```go
 p.Configure(Claimed).
-   .PermitIf(IsOrderCancellable, Cancel, Cancelled)
+   PermitIf(IsOrderCancellable, Cancel, Cancelled)
 ```
 
 Using `PermitIf` now allows the `fsm.CanFire` code block above to be executed without modification,  but now the state machine validates if the trigger can be used based on the order's scheduled to shop time.
 
+### Reentrancy
+Reentrancy is a state transition where the destination is the same State.   This means `OnExit` functions get called for the current state, followed by the `OnEntry` calls for the current state.  All the SideEffects are also accordingly raised as expected with the source and destination states being the same.
+
+A simple reentrant state is defined as:
+
+```go
+p.Configure(Claimed).
+   PermitReentry(AddItemToOrder)
+```
+
+Likewise, a conditional `PermitReentryIf` can be defined that relies on a predicate to decide if the trigger may be fired.  For this example, a rule might determine that an item can only be added based on timing or other conditions described in a function called `ItemAddRule`.
+
+```go
+p.Configure(Claimed).
+   PermitReentryIf(ItemAddRule, AddItemToOrder)
+```   
 
 ## Functional Composition
 
