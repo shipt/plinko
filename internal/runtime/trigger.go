@@ -61,6 +61,7 @@ func (psm plinkoStateMachine) Fire(ctx context.Context, payload plinko.Payload, 
 	}
 
 	triggerData := sd2.Triggers[trigger]
+
 	if triggerData == nil {
 		return payload, plinkoerror.CreatePlinkoTriggerError(trigger, fmt.Sprintf("Trigger '%s' not found in definition for state: %s", trigger, state))
 	}
@@ -71,6 +72,12 @@ func (psm plinkoStateMachine) Fire(ctx context.Context, payload plinko.Payload, 
 		Source:      state,
 		Destination: destinationState.State,
 		Trigger:     trigger,
+	}
+
+	if triggerData.Predicate != nil {
+		if err := triggerData.Predicate(ctx, payload, td); err != nil {
+			return payload, plinkoerror.CreatePlinkoTriggerError(trigger, fmt.Sprintf("Conditional Trigger '%s' conditions not met for state: %s", trigger, state))
+		}
 	}
 
 	sideeffects.Dispatch(ctx, plinko.BeforeTransition, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
