@@ -40,10 +40,10 @@ go get -u github.com/shipt/plinko`
 Next, include Plinko in your application:
 
 ```go
-  import "github.com/shipt/plinko"
+import "github.com/shipt/plinko"
 ```
 
-You will define state machine using the examples below, and compiling the state machine once to reuse again and again.  Efficiency is front of mind,  meaning the compilation process is fast and runs in far less than 1/10,000th of a second on a reasonable VM. Or, given a single thread on an x86 processor, a statemachine can be fully compiled and ready to run more than 1,000,000 times a second.  In other words, start up time won't be an issue.
+You will define state machine using the examples below, and compiling the state machine once to reuse again and again.  Efficiency is front of mind,  meaning the compilation process is fast and runs in far less than 1/10,000th of a second on a reasonable VM. Or, given a single thread on an x86 processor, a statemachine can be fully compiled and ready to run more than 10,000,000 times a second.  
 
 # Introspection
 The state machine can provide a list of triggers for a given state to provide simple access to the list of triggers for any state.
