@@ -198,7 +198,8 @@ func TestFireWithReentrancyConditionalFalse(t *testing.T) {
 	}
 
 	pr, err := psm.Fire(context.TODO(), payload, Open)
-	assert.Nil(t, err)
+	assert.NotNil(t, err)
+	assert.Equal(t, "Conditional Trigger 'Open' conditions not met for state: Created", err.Error())
 	assert.NotNil(t, pr)
 
 	assert.Equal(t, Created, pr.GetState())
