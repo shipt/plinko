@@ -1,6 +1,9 @@
 # Plinko - a Fluent State Machine for Go
 
+
 [![Build Status](https://drone.shipt.com/api/badges/shipt/plinko/status.svg)](https://drone.shipt.com/shipt/plinko) [![codecov](https://codecov.io/gh/shipt/plinko/branch/main/graph/badge.svg?token=8UX649KGGV)](https://codecov.io/gh/shipt/plinko) Build Status
+
+## Create state machines and lightweight state machine-based workflows directly in golang code
 
 The project, as well as the example below, are inspired by the [Erlang State Machine](https://erlang.org/doc/design_principles/statem.html) and [Stateless project](https://github.com/dotnet-state-machine/stateless) implementations. The goal is to create the fastest state machine that can be reused across many entities with the least amount of overhead in the process.
 
