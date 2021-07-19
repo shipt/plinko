@@ -7,8 +7,6 @@
 
 The project, as well as the example below, are inspired by the [Erlang State Machine](https://erlang.org/doc/design_principles/statem.html) and [Stateless project](https://github.com/dotnet-state-machine/stateless) implementations. The goal is to create the fastest state machine that can be reused across many entities with the least amount of overhead in the process.
 
-shipt/plinko is licensed under the [MIT license](./LICENSE.md).
-
 ## Why State Machines?
 Some state machine implementations keep track of an in-memory state during the running of an application. This makes sense for desktop applications or games where the journey of that state is critical to the user-facing process, but that doesn't map well to web services shepherding things like Orders and Products that number in the thousands-to-millions on any given day.
 
@@ -34,6 +32,7 @@ Some useful extensions are also provided:
 * Reentrant states
 * Export to PlantUML
 
+
 # Installing 
 
 Using Plinko is easy.   First, use `go get` to istall the latest version of the library.  This command will install everything you need - in fact, one design goal of Plinko is to minimize dependencies.  There are no runtime dependencies required for Plinko, and the only dependencies used by the project are used for unit testing.
@@ -50,6 +49,8 @@ import "github.com/shipt/plinko"
 
 You will define state machine using the examples below, and compiling the state machine once to reuse again and again.  Efficiency is front of mind,  meaning the compilation process is fast and runs in far less than 1/10,000th of a second on a reasonable VM. Or, given a single thread on an x86 processor, a statemachine can be fully compiled and ready to run more than 10,000,000 times a second.  
 
+## License
+shipt/plinko is licensed under the [MIT license](./LICENSE.md).
 # Introspection
 The state machine can provide a list of triggers for a given state to provide simple access to the list of triggers for any state.
 

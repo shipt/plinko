@@ -1,3 +1,5 @@
+// Copyright 2021, Shipt. All rights reserved.
+// Licensed under the Apache License
 package state
 
 import "github.com/shipt/plinko"
