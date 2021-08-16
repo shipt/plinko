@@ -70,7 +70,6 @@ func TestAddExit(t *testing.T) {
 }
 
 func TestExecuteErrorChainSingleFunctionWithModifiedDestination(t *testing.T) {
-	const Woo plinko.State = "woo"
 	const ErrorState plinko.State = "bar2"
 	const GoodState plinko.State = "bar"
 	transitionDef := sideeffects.TransitionDef{
@@ -96,7 +95,6 @@ func TestExecuteErrorChainSingleFunctionWithModifiedDestination(t *testing.T) {
 }
 
 func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
-	const Woo plinko.State = "woo"
 	const ErrorState plinko.State = "bar2"
 	const GoodState plinko.State = "bar"
 	transitionDef := sideeffects.TransitionDef{

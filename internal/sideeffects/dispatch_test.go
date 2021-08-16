@@ -11,8 +11,7 @@ import (
 )
 
 type testPayload struct {
-	state     plinko.State
-	condition bool
+	state plinko.State
 }
 
 func (p testPayload) GetState() plinko.State {

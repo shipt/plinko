@@ -194,11 +194,14 @@ func TestOnEntryTriggerOperation(t *testing.T) {
 	assert.Equal(t, 2, counter)
 	assert.True(t, testPayload.condition)
 
-	psm.Fire(context.TODO(), payload, "Resubmit")
+	pd, err := psm.Fire(context.TODO(), payload, "Resubmit")
 	assert.Equal(t, 2, counter)
+	assert.Nil(t, err)
+	assert.Equal(t, plinko.State("PublishedOrder"), pd.GetState())
 
-	psm.Fire(context.TODO(), payload, "Resupply")
+	_, err = psm.Fire(context.TODO(), payload, "Resupply")
 	assert.Equal(t, 4, counter)
+	assert.Nil(t, err)
 
 }
 
@@ -259,10 +262,11 @@ func TestStateMachine(t *testing.T) {
 
 	payload := &testPayload{state: NewOrder}
 
-	psm.Fire(context.TODO(), payload, "Submit")
+	_, err := psm.Fire(context.TODO(), payload, "Submit")
 
 	assert.Equal(t, plinko.StateAction("AfterTransition"), lastStateAction)
 	assert.Equal(t, 3, visitCount)
+	assert.Nil(t, err)
 }
 
 func TestStateMachineSideEffectFiltering(t *testing.T) {
@@ -295,10 +299,11 @@ func TestStateMachineSideEffectFiltering(t *testing.T) {
 
 	payload := testPayload{state: NewOrder}
 
-	psm.Fire(context.TODO(), &payload, "Submit")
+	_, err := psm.Fire(context.TODO(), &payload, "Submit")
 
 	assert.Equal(t, plinko.StateAction("AfterTransition"), lastStateAction)
 	assert.Equal(t, 1, visitCount)
+	assert.Nil(t, err)
 }
 
 func TestCanFire(t *testing.T) {
@@ -435,7 +440,7 @@ func TestEnumerateTriggers(t *testing.T) {
 
 	// request a state that doesn't exist in the state machine definiton and get an error thrown
 	payload = &testPayload{state: Claimed}
-	triggers, err = psm.EnumerateActiveTriggers(payload)
+	_, err = psm.EnumerateActiveTriggers(payload)
 
 	assert.NotNil(t, err)
 }

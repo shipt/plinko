@@ -11,8 +11,7 @@ import (
 )
 
 func TestPanicErrorCreate(t *testing.T) {
-	var a func(a int) error
-	a = func(a int) (retErr error) {
+	a := func(a int) (retErr error) {
 		defer func() {
 			if err1 := recover(); err1 != nil {
 				stack := string(debug.Stack())
@@ -33,8 +32,7 @@ func TestPanicErrorCreate(t *testing.T) {
 }
 
 func TestPanicErrorCreateWithNilError(t *testing.T) {
-	var a func(a int) error
-	a = func(a int) (retErr error) {
+	a := func(a int) (retErr error) {
 		defer func() {
 			if err1 := recover(); err1 != nil {
 				stack := string(debug.Stack())

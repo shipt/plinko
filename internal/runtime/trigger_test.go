@@ -342,12 +342,12 @@ func TestEnumerateTriggers(t *testing.T) {
 
 	psm := co.StateMachine
 	payload := &testPayload{state: Created}
-	triggers, err := psm.EnumerateActiveTriggers(payload)
+	_, err := psm.EnumerateActiveTriggers(payload)
 
 	assert.Nil(t, err)
 
 	payload = &testPayload{state: Opened}
-	triggers, err = psm.EnumerateActiveTriggers(payload)
+	triggers, err := psm.EnumerateActiveTriggers(payload)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(triggers))
@@ -357,4 +357,5 @@ func TestEnumerateTriggers(t *testing.T) {
 	triggers, err = psm.EnumerateActiveTriggers(payload)
 
 	assert.NotNil(t, err)
+	assert.Equal(t, 0, len(triggers))
 }

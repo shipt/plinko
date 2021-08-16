@@ -104,7 +104,7 @@ func (psm plinkoStateMachine) Fire(ctx context.Context, payload plinko.Payload, 
 		var errSub error
 
 		payload, mtd, errSub := destinationState.Callbacks.ExecuteErrorChain(ctx, payload, td, err, time.Since(start).Milliseconds())
-		td = &sideeffects.TransitionDef{
+		_ = &sideeffects.TransitionDef{
 			Source:      mtd.GetSource(),
 			Destination: mtd.GetDestination(),
 			Trigger:     mtd.GetTrigger(),

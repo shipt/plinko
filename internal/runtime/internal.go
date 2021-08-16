@@ -55,7 +55,7 @@ func checkCallstack(frames *runtime.Frames, functionName string) string {
 		return functionName
 	}
 
-	for frame, more := frames.Next(); more == true; frame, more = frames.Next() {
+	for frame, more := frames.Next(); more; frame, more = frames.Next() {
 		list := strings.Split(frame.Function, ".")
 
 		if len(list) > 0 && list[len(list)-1] == functionName {
@@ -219,9 +219,6 @@ func (pd *PlinkoDefinition) Configure(state plinko.State, opts ...plinko.StateOp
 	pd.Abs.StateDefinitions = append(pd.Abs.StateDefinitions, &sd)
 
 	return sd
-}
-
-type compileInfo struct {
 }
 
 type TriggerDefinition struct {
