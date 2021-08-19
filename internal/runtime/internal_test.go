@@ -25,7 +25,7 @@ func TestGetCallerHelper(t *testing.T) {
 	})
 
 	// this follow test is based on the location of the above line
-	assert.Equal(t, "internal/runtime/internal_test.go:19", n)
+	assert.Equal(t, "internal/runtime/internal_test.go:23", n)
 
 }
 
