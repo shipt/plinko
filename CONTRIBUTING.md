@@ -22,7 +22,6 @@ issue first to get feedback on your idea.
 4. Consider quashing your commits (`git rebase -i`). One intent alongside one
    commit makes it clearer for people to review and easier to understand your
    intention.
-5. If you haven't already, complete the Contributor License Agreement ("CLA").
 
 ## Copyright Notice for files
 Copy and paste this to the top of your new file(s):
