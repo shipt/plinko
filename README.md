@@ -38,7 +38,7 @@ Some useful extensions are also provided:
 Using Plinko is easy.   First, use `go get` to istall the latest version of the library.  This command will install everything you need - in fact, one design goal of Plinko is to minimize dependencies.  There are no runtime dependencies required for Plinko, and the only dependencies used by the project are used for unit testing.
 
 ```go
-go get -u github.com/shipt/plinko`
+go get -u github.com/shipt/plinko
 ```
 
 Next, include Plinko in your application:
