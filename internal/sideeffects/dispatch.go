@@ -64,9 +64,7 @@ func (td TransitionDef) GetTrigger() plinko.Trigger {
 	return td.Trigger
 }
 
-// Dispatch is responsible for executing a set of side effect definitions when called upon.  It is sensitive to the definition
-//
-//	in terms of what is called.
+// Dispatch is responsible for executing a set of side effect definitions when called upon.
 func Dispatch(ctx context.Context, stateAction plinko.StateAction, sideEffects []SideEffectDefinition, payload plinko.Payload, transitionInfo plinko.TransitionInfo, elapsedMilliseconds int64) int {
 	iCount := 0
 	for _, sideEffectDefinition := range sideEffects {
