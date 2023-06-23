@@ -82,7 +82,7 @@ func TestExecuteErrorChainSingleFunctionWithModifiedDestination(t *testing.T) {
 		Trigger:     "baz",
 	}
 	list := []ChainedErrorCall{
-		ChainedErrorCall{
+		{
 			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 				m.SetDestination(ErrorState)
 				return p, nil
@@ -108,13 +108,13 @@ func TestExecuteErrorChainMultiFunctionWithError(t *testing.T) {
 	}
 	counter := 0
 	list := []ChainedErrorCall{
-		ChainedErrorCall{
+		{
 			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 				counter++
 				return p, errors.New("notwizard")
 			},
 		},
-		ChainedErrorCall{
+		{
 			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 				m.SetDestination(ErrorState)
 				counter++
@@ -213,7 +213,7 @@ func TestChainedFunctionPassingProperly(t *testing.T) {
 
 	list := []ChainedFunctionCall{
 
-		ChainedFunctionCall{
+		{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
 				te := p.(testPayload)
 				assert.Equal(t, "foo", te.value)
@@ -226,7 +226,7 @@ func TestChainedFunctionPassingProperly(t *testing.T) {
 				return te2, nil
 			},
 		},
-		ChainedFunctionCall{
+		{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
 				te := p.(testPayload)
 				assert.Equal(t, "foo2", te.value)
@@ -255,12 +255,12 @@ func TestChainedFunctionChainWithPanic(t *testing.T) {
 
 	list := []ChainedFunctionCall{
 
-		ChainedFunctionCall{
+		{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
 				return p, nil
 			},
 		},
-		ChainedFunctionCall{
+		{
 			Operation: func(_ context.Context, p plinko.Payload, m plinko.TransitionInfo) (plinko.Payload, error) {
 				panic(errors.New("panic-error"))
 				//return p, errors.New("notwizard")
@@ -291,13 +291,13 @@ func TestErrorFunctionChainWithPanic(t *testing.T) {
 	}
 
 	list := []ChainedErrorCall{
-		ChainedErrorCall{
+		{
 			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 
 				panic(errors.New("panic-error"))
 			},
 		},
-		ChainedErrorCall{
+		{
 			ErrorOperation: func(_ context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 
 				return p, nil

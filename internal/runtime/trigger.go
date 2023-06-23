@@ -94,7 +94,7 @@ func (psm plinkoStateMachine) Fire(ctx context.Context, payload plinko.Payload, 
 		payload, td, errSub := sd2.Callbacks.ExecuteErrorChain(ctx, payload, td, err, time.Since(start).Milliseconds())
 
 		if errSub != nil {
-			// this ensures that the error condition is trapped and not overriden to the caller of the trigger function
+			// this ensures that the error condition is trapped and not overridden to the caller of the trigger function
 			err = errSub
 		}
 		sideeffects.Dispatch(ctx, plinko.BetweenStates, psm.pd.SideEffects, payload, td, time.Since(start).Milliseconds())
