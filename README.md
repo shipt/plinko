@@ -1,7 +1,7 @@
 # Plinko - a Fluent State Machine for Go
 
 
-[![Build Status](https://drone.shipt.com/api/badges/shipt/plinko/status.svg)](https://drone.shipt.com/shipt/plinko) [![codecov](https://codecov.io/gh/shipt/plinko/branch/main/graph/badge.svg?token=8UX649KGGV)](https://codecov.io/gh/shipt/plinko) Build Status[![Go Report Card](https://goreportcard.com/badge/github.com/shipt/plinko)](https://goreportcard.com/report/github.com/shipt/plinko)
+[![Build Status](https://drone.shipt.com/api/badges/shipt/plinko/status.svg)](https://drone.shipt.com/shipt/plinko) [![Go Report Card](https://goreportcard.com/badge/github.com/shipt/plinko)](https://goreportcard.com/report/github.com/shipt/plinko) [![codecov](https://codecov.io/gh/shipt/plinko/branch/main/graph/badge.svg?token=8UX649KGGV)](https://codecov.io/gh/shipt/plinko) Build Status
 
 ## Create state machines and lightweight state machine-based workflows directly in golang code
 
@@ -9,7 +9,7 @@ The project, as well as the example below, are inspired by the [Erlang State Mac
 
 ## Why State Machines?
 Some state machine implementations keep track of an in-memory state during the running of an application. This makes sense for desktop applications or games where the journey of that state is critical to the user-facing process, but that doesn't map well to web services shepherding things like Orders and Products that number in the thousands-to-millions on any given day.
-
+q
 This allows the state machine to be reduced to a simple data structure, and enables the cost of wiring up the machine to happen only once but reused multiple times.  In turn, the state machine can be shared across multiple threads and executed concurrently without interference between discrete runs.
 
 There are a number of good articles on this front, there are a couple that focus on state design from the [esoteric around soundness of the design](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State) to the more [functional programming based definition of a state machine](https://hexdocs.pm/as_fsm/readme.html).
