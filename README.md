@@ -1,7 +1,7 @@
 # Plinko - a Fluent State Machine for Go
 
 
-[![Build Status](https://drone.shipt.com/api/badges/shipt/plinko/status.svg)](https://drone.shipt.com/shipt/plinko) [![codecov](https://codecov.io/gh/shipt/plinko/branch/main/graph/badge.svg?token=8UX649KGGV)](https://codecov.io/gh/shipt/plinko) Build Status
+[![Build Status](https://drone.shipt.com/api/badges/shipt/plinko/status.svg)](https://drone.shipt.com/shipt/plinko) [![Go Report Card](https://goreportcard.com/badge/github.com/shipt/plinko)](https://goreportcard.com/report/github.com/shipt/plinko) [![codecov](https://codecov.io/gh/shipt/plinko/branch/main/graph/badge.svg?token=8UX649KGGV)](https://codecov.io/gh/shipt/plinko) Build Status
 
 ## Create state machines and lightweight state machine-based workflows directly in golang code
 
