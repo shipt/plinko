@@ -62,6 +62,7 @@ import (
 	"context"
 
 	 "github.com/shipt/plinko"
+	 "github.com/shipt/plinko/pkg/config"
 )
 
 const Created          plinko.State = "Created"
@@ -85,7 +86,7 @@ const Reinstate plinko.Trigger = "Reinstate"
  Below, a state machine is created describing a set of states an order can progress through along with the triggers that can be used.
 
 ```go
-p := plinko.CreateDefinition()
+p := config.CreatePlinkoDefinition()
 
 p.Configure(Created).
 	OnEntry(OnNewOrderEntry).
@@ -255,7 +256,7 @@ We can better understand how this works by looking at a standard configuration.
 
 ```go
 // given a standard definition ...
-p := plinko.CreateDefinition()
+p := config.CreatePlinkoDefinition()
 
 p.Configure(Created).
 	OnEntry(OnNewOrderEntry).
