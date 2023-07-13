@@ -33,7 +33,7 @@ Some useful extensions are also provided:
 * Export to PlantUML
 
 
-# Installing 
+# Installing
 
 Using Plinko is easy.   First, use `go get` to istall the latest version of the library.  This command will install everything you need - in fact, one design goal of Plinko is to minimize dependencies.  There are no runtime dependencies required for Plinko, and the only dependencies used by the project are used for unit testing.
 
@@ -47,7 +47,7 @@ Next, include Plinko in your application:
 import "github.com/shipt/plinko"
 ```
 
-You will define state machine using the examples below, and compiling the state machine once to reuse again and again.  Efficiency is front of mind,  meaning the compilation process is fast and runs in far less than 1/10,000th of a second on a reasonable VM. Or, given a single thread on an x86 processor, a statemachine can be fully compiled and ready to run more than 10,000,000 times a second.  
+You will define state machine using the examples below, and compiling the state machine once to reuse again and again.  Efficiency is front of mind,  meaning the compilation process is fast and runs in far less than 1/10,000th of a second on a reasonable VM. Or, given a single thread on an x86 processor, a statemachine can be fully compiled and ready to run more than 10,000,000 times a second.
 
 ## License
 shipt/plinko is licensed under the [MIT license](./LICENSE.md).
@@ -191,12 +191,12 @@ p.Configure(Claimed).
 
 ## Functional Composition
 
-When entering or exiting a state, a series of functions need to act to make that transition complete.  Some transitions are simple, and some are complex.  The key here is creating a series of steps that are testable and operate based on a standard pattern. 
+When entering or exiting a state, a series of functions need to act to make that transition complete.  Some transitions are simple, and some are complex.  The key here is creating a series of steps that are testable and operate based on a standard pattern.
 
 Let's take a look at a piece of code we setup earlier:
 
 
-```go 
+```go
 p.Configure(Created).
    OnEntry(OnNewOrderEntry).
    Permit(Open, Opened).
@@ -215,13 +215,13 @@ func OnNewOrderEntry(p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload,
 }
 ```
 
-This is useful for a couple of reasons: First, this becomes one distinct action that can succeed or fail.  When it succeeds, the chain continues and works toward the successful transition to the new state. And second, this is an operation that can be tested in isolation.  
+This is useful for a couple of reasons: First, this becomes one distinct action that can succeed or fail.  When it succeeds, the chain continues and works toward the successful transition to the new state. And second, this is an operation that can be tested in isolation.
 
 Both of these reasons are significant when building a complex set of transitions.
 
 Next, we have a variation on the chaining where we can say "only run this function if a particular trigger triggered the transition".   This is the `OnTriggerEntry(trigger, func)` function.
 
-```go 
+```go
 p.Configure(Created).
    OnTriggerEntry(AddItem, RecalculateTotals).
    Permit(Open, Opened).
@@ -245,7 +245,7 @@ Side Effects are raised at different phases of a state transition.  Given an ord
 
 In the above list, you can see the registered function is called 4 times throughout the lifecycle of the transition.   This gives us consistency and observability throughout the process.
 
-We can better understand how this works by looking at a standard configuration.  
+We can better understand how this works by looking at a standard configuration.
 
 ```go
 // given a standard definition ...
@@ -296,7 +296,6 @@ func MetricsRecording(action StateAction, payload Payload, transitionInfo Transi
    // things like graphite, influx or any timeseries metrics database for graphing and alerting.
    metrics.RecordStateMovement(action, payload, transitionInfo)
 }
-
 ```
 
 
@@ -361,4 +360,3 @@ fmt.Println(string(uml))
 ```
 
 ![PlantUML Rendered State Diagram](./docs/sample_state_diagram.png)
-
