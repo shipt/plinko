@@ -35,7 +35,7 @@ Some useful extensions are also provided:
 
 # Installing
 
-Using Plinko is easy.   First, use `go get` to istall the latest version of the library.  This command will install everything you need - in fact, one design goal of Plinko is to minimize dependencies.  There are no runtime dependencies required for Plinko, and the only dependencies used by the project are used for unit testing.
+Using Plinko is easy.   First, use `go get` to install the latest version of the library.  This command will install everything you need - in fact, one design goal of Plinko is to minimize dependencies.  There are no runtime dependencies required for Plinko, and the only dependencies used by the project are used for unit testing.
 
 ```go
 go get -u github.com/shipt/plinko
@@ -325,7 +325,7 @@ func RedirectOnDeactivatedCustomer(p Payload, m ModifiableTransitionInfo, e erro
 
 There are a couple things to note.   If you return a non-nil `error` during an `OnError` routine, this is regarded as a fatal error that is floated to the caller who initiated the `.Fire(..)` command.  This condition is floated to the registered SideEffect handlers as well.
 
-Some key pieces to remember when building up a set of error handlers.    First, you don't have to handle _every_ error case.  This is done by returning `(payload, nil)`) to the caller.  Plinko will call any subsequent error handlers in this case to give each handler an opportunity to perform it's role in the set of operations.  This is powerful, as handlers can take on different aspects of error handling, including custom messaging and metrics. This allows these functions to be simple, focused operations that compose a larger set of responsiblities (through additional functions) when an error occurs.
+Some key pieces to remember when building up a set of error handlers.    First, you don't have to handle _every_ error case.  This is done by returning `(payload, nil)`) to the caller.  Plinko will call any subsequent error handlers in this case to give each handler an opportunity to perform it's role in the set of operations.  This is powerful, as handlers can take on different aspects of error handling, including custom messaging and metrics. This allows these functions to be simple, focused operations that compose a larger set of responsibilities (through additional functions) when an error occurs.
 
 Lastly, here is a sample plinko configuration that uses error handling to perform the proper state destination redirect shown above when an order transitions to `Opened` and the user has been deactivated.  Note the separation of concerns - one to perform the redirect and save state, and the other to perform a system notification.
 
@@ -344,7 +344,7 @@ p.Configure(Opened).
 ```
 
 ## Panic Support
-On calls to Entry or Exit Functions, Plinko will capture any panics.  These panics are recorded as a structured error, containing when and where the error occured.  The `OnError` handlers can then respond as appropriate.
+On calls to Entry or Exit Functions, Plinko will capture any panics.  These panics are recorded as a structured error, containing when and where the error occurred.  The `OnError` handlers can then respond as appropriate.
 
 ## State Machine self-documentation
 The fsm can document itself upon a successful compile - emitting PlantUML which can, in turn, be rendered into a state diagram:
