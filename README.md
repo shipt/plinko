@@ -33,9 +33,9 @@ Some useful extensions are also provided:
 * Export to PlantUML
 
 
-# Installing 
+# Installing
 
-Using Plinko is easy.   First, use `go get` to istall the latest version of the library.  This command will install everything you need - in fact, one design goal of Plinko is to minimize dependencies.  There are no runtime dependencies required for Plinko, and the only dependencies used by the project are used for unit testing.
+Using Plinko is easy.   First, use `go get` to install the latest version of the library.  This command will install everything you need - in fact, one design goal of Plinko is to minimize dependencies.  There are no runtime dependencies required for Plinko, and the only dependencies used by the project are used for unit testing.
 
 ```go
 go get -u github.com/shipt/plinko
@@ -47,7 +47,7 @@ Next, include Plinko in your application:
 import "github.com/shipt/plinko"
 ```
 
-You will define state machine using the examples below, and compiling the state machine once to reuse again and again.  Efficiency is front of mind,  meaning the compilation process is fast and runs in far less than 1/10,000th of a second on a reasonable VM. Or, given a single thread on an x86 processor, a statemachine can be fully compiled and ready to run more than 10,000,000 times a second.  
+You will define state machine using the examples below, and compiling the state machine once to reuse again and again.  Efficiency is front of mind,  meaning the compilation process is fast and runs in far less than 1/10,000th of a second on a reasonable VM. Or, given a single thread on an x86 processor, a statemachine can be fully compiled and ready to run more than 10,000,000 times a second.
 
 ## License
 shipt/plinko is licensed under the [MIT license](./LICENSE.md).
@@ -58,58 +58,65 @@ The state machine can provide a list of triggers for a given state to provide si
 A state machine is created by articulating the states,  the triggers that can be used at each state and the destination state where they land. Here is a sample declaration of the states and triggers we will use:
 
 ```go
-const Created          State = "Created"
-const Opened           State = "Opened"
-const Claimed          State = "Claimed"
-const ArriveAtStore    State = "ArrivedAtStore"
-const MarkedAsPickedUp State = "MarkedAsPickedup"
-const Delivered        State = "Delivered"
-const Canceled         State = "Canceled"
-const Returned         State = "Returned"
+import (
+	"context"
 
-const Submit    Trigger = "Submit"
-const Cancel    Trigger = "Cancel"
-const Open      Trigger = "Open"
-const Claim     Trigger = "Claim"
-const Deliver   Trigger = "Deliver"
-const Return    Trigger = "Return"
-const Reinstate Trigger = "Reinstate"
+	 "github.com/shipt/plinko"
+	 "github.com/shipt/plinko/pkg/config"
+)
+
+const Created          plinko.State = "Created"
+const Opened           plinko.State = "Opened"
+const Claimed          plinko.State = "Claimed"
+const ArriveAtStore    plinko.State = "ArrivedAtStore"
+const MarkedAsPickedUp plinko.State = "MarkedAsPickedup"
+const Delivered        plinko.State = "Delivered"
+const Canceled         plinko.State = "Canceled"
+const Returned         plinko.State = "Returned"
+
+const Submit    plinko.Trigger = "Submit"
+const Cancel    plinko.Trigger = "Cancel"
+const Open      plinko.Trigger = "Open"
+const Claim     plinko.Trigger = "Claim"
+const Deliver   plinko.Trigger = "Deliver"
+const Return    plinko.Trigger = "Return"
+const Reinstate plinko.Trigger = "Reinstate"
 ```
 
  Below, a state machine is created describing a set of states an order can progress through along with the triggers that can be used.
 
 ```go
-p := plinko.CreateDefinition()
+p := config.CreatePlinkoDefinition()
 
 p.Configure(Created).
-   OnEntry(OnNewOrderEntry).
-   Permit(Open, Opened).
-   Permit(Cancel, Canceled)
+	OnEntry(OnNewOrderEntry).
+	Permit(Open, Opened).
+	Permit(Cancel, Canceled)
 
 p.Configure(Opened).
-   Permit(AddItemToOrder, Opened).
-   Permit(Claim, Claimed).
-   Permit(Cancel, Canceled)
+	Permit(AddItemToOrder, Opened).
+	Permit(Claim, Claimed).
+	Permit(Cancel, Canceled)
 
 p.Configure(Claimed).
-   Permit(AddItemToOrder, Claimed).
-   Permit(Submit, ArriveAtStore).
-   Permit(Cancel, Canceled)
+	Permit(AddItemToOrder, Claimed).
+	Permit(Submit, ArriveAtStore).
+	Permit(Cancel, Canceled)
 
 p.Configure(ArriveAtStore).
-   Permit(Submit, MarkedAsPickedUp).
-   Permit(Cancel, Canceled)
+	Permit(Submit, MarkedAsPickedUp).
+	Permit(Cancel, Canceled)
 
 p.Configure(MarkedAsPickedUp).
-   Permit(Deliver, Delivered).
-   Permit(Cancel, Canceled)
+	Permit(Deliver, Delivered).
+	Permit(Cancel, Canceled)
 
 p.Configure(Delivered).
-   Permit(Return, Returned)
+	Permit(Return, Returned)
 
 p.Configure(Canceled).
-   Permit(Reinstate, Created)
-	
+	Permit(Reinstate, Created)
+
 p.Configure(Returned)
 ```
 
@@ -119,7 +126,7 @@ Once created, the next step is compiling the state machine.  This means the stat
 co := p.Compile()
 
 if co.error {
-   // exit
+	// exit
 }
 
 fsm := co.StateMachine
@@ -140,18 +147,18 @@ The state machine allows the definitions of transitions using the `Permit` funct
 
 ```go
 p.Configure(Opened).
-   // ...
-   Permit(Cancel, Canceled)
+	// ...
+	Permit(Cancel, Canceled)
 
 p.Configure(Claimed).
-   // The key here is that Canceling from a Claimed state is not permitted.
+	// The key here is that Canceling from a Claimed state is not permitted.
 ```
 
 This is useful, because I now have guard rails around when a `Cancel` trigger can be used and when it cannot.  Furthermore, I can use the `CanFire()` method of the state machine to ask if I have a valid action:
 
 ```go
 if !fsm.CanFire(ctx, payload, Cancel) {
-   return "Cannot perform this action"
+	return "Cannot perform this action"
 }
 ```
 
@@ -159,7 +166,7 @@ Furthermore, let's say `Cancel` is allowed within a timeframe described in the p
 
 ```go
 func IsOrderCancellable(p Payload, t TransitionInfo) bool {
-   return p.ScheduledToShop().Sub(time.Now()).Hours() >= 1
+	return p.ScheduledToShop().Sub(time.Now()).Hours() >= 1
 }
 ```
 
@@ -167,7 +174,7 @@ In this case, I define the trigger differently with:
 
 ```go
 p.Configure(Claimed).
-   PermitIf(IsOrderCancellable, Cancel, Cancelled)
+	PermitIf(IsOrderCancellable, Cancel, Cancelled)
 ```
 
 Using `PermitIf` now allows the `fsm.CanFire` code block above to be executed without modification,  but now the state machine validates if the trigger can be used based on the order's scheduled to shop time.
@@ -179,53 +186,53 @@ A simple reentrant state is defined as:
 
 ```go
 p.Configure(Claimed).
-   PermitReentry(AddItemToOrder)
+	PermitReentry(AddItemToOrder)
 ```
 
 Likewise, a conditional `PermitReentryIf` can be defined that relies on a predicate to decide if the trigger may be fired.  For this example, a rule might determine that an item can only be added based on timing or other conditions described in a function called `ItemAddRule`.
 
 ```go
 p.Configure(Claimed).
-   PermitReentryIf(ItemAddRule, AddItemToOrder)
-```   
+	PermitReentryIf(ItemAddRule, AddItemToOrder)
+```
 
 ## Functional Composition
 
-When entering or exiting a state, a series of functions need to act to make that transition complete.  Some transitions are simple, and some are complex.  The key here is creating a series of steps that are testable and operate based on a standard pattern. 
+When entering or exiting a state, a series of functions need to act to make that transition complete.  Some transitions are simple, and some are complex.  The key here is creating a series of steps that are testable and operate based on a standard pattern.
 
 Let's take a look at a piece of code we setup earlier:
 
 
-```go 
+```go
 p.Configure(Created).
-   OnEntry(OnNewOrderEntry).
-   Permit(Open, Opened).
-   Permit(AddItem, Created)
+	OnEntry(OnNewOrderEntry).
+	Permit(Open, Opened).
+	Permit(AddItem, Created)
 ```
 
 OnNewOrderEntry is function defined as such:
 
 ``` go
 func OnNewOrderEntry(p plinko.Payload, t plinko.TransitionInfo) (plinko.Payload, error) {
-   // perform a series of steps based on the 
-   // payload and transition info
-   // ...
+	// perform a series of steps based on the
+	// payload and transition info
+	// ...
 
-   return p, nil
+	return p, nil
 }
 ```
 
-This is useful for a couple of reasons: First, this becomes one distinct action that can succeed or fail.  When it succeeds, the chain continues and works toward the successful transition to the new state. And second, this is an operation that can be tested in isolation.  
+This is useful for a couple of reasons: First, this becomes one distinct action that can succeed or fail.  When it succeeds, the chain continues and works toward the successful transition to the new state. And second, this is an operation that can be tested in isolation.
 
 Both of these reasons are significant when building a complex set of transitions.
 
 Next, we have a variation on the chaining where we can say "only run this function if a particular trigger triggered the transition".   This is the `OnTriggerEntry(trigger, func)` function.
 
-```go 
+```go
 p.Configure(Created).
-   OnTriggerEntry(AddItem, RecalculateTotals).
-   Permit(Open, Opened).
-   Permit(AddItem, Created)
+	OnTriggerEntry(AddItem, RecalculateTotals).
+	Permit(Open, Opened).
+	Permit(AddItem, Created)
 ```
 
  In the example above, the `RecalculateTotals` function is only executed when the `AddItem` trigger is raised.   This allows us to explicitly describe the transition steps without placing that complexity inside the `RecalculateTotals` function.
@@ -245,21 +252,21 @@ Side Effects are raised at different phases of a state transition.  Given an ord
 
 In the above list, you can see the registered function is called 4 times throughout the lifecycle of the transition.   This gives us consistency and observability throughout the process.
 
-We can better understand how this works by looking at a standard configuration.  
+We can better understand how this works by looking at a standard configuration.
 
 ```go
 // given a standard definition ...
-p := plinko.CreateDefinition()
+p := config.CreatePlinkoDefinition()
 
 p.Configure(Created).
-   OnEntry(OnNewOrderEntry).
-   Permit(Open, Opened).
-   Permit(Cancel, Canceled)
+	OnEntry(OnNewOrderEntry).
+	Permit(Open, Opened).
+	Permit(Cancel, Canceled)
 
 p.Configure(Opened).
-   Permit(AddItemToOrder, Opened).
-   Permit(Claim, Claimed).
-   Permit(Cancel, Canceled)
+	Permit(AddItemToOrder, Opened).
+	Permit(Claim, Claimed).
+	Permit(Cancel, Canceled)
 
 
 // we register for side effects like this.
@@ -275,28 +282,27 @@ In addition, we registered a FilteredSideEffect that only gets called on the req
 These are functions that have signature including the starting state, the destination state, the trigger used to kick off the transition and the payload.
 
 ```go
-func StateLogging(action StateAction, payload Payload, transitionInfo TransitionInfo) {
-   // this can typically be broken out into a function on the logger, but keeping
-   // it here for clarity in demonstration
+func StateLogging(action plinko.StateAction, payload plinko.Payload, transitionInfo plinko.TransitionInfo) {
+	// this can typically be broken out into a function on the logger, but keeping
+	// it here for clarity in demonstration
 
-   logEntry := StateLog {
-      Action:           action,
-      SourceState:      transitionInfo.GetSource(),
-      DestinationState: transitionInfo.GetDestination(),
-      Trigger:          transitionInfo.GetTrigger(),
-      OrderID:          payload.GetOrderID(),
-   }
+	logEntry := StateLog {
+		Action:           action,
+		SourceState:      transitionInfo.GetSource(),
+		DestinationState: transitionInfo.GetDestination(),
+		Trigger:          transitionInfo.GetTrigger(),
+		OrderID:          payload.GetOrderID(),
+	}
 
-   // call to our logger that will decorate the entry with timing information and the like.
-   logger.LogStateInfo(logEntry)
+	// call to our logger that will decorate the entry with timing information and the like.
+	logger.LogStateInfo(logEntry)
 }
 
-func MetricsRecording(action StateAction, payload Payload, transitionInfo TransitionInfo) {
-   // this can be a simple function that pulls apart the details and sends them to
-   // things like graphite, influx or any timeseries metrics database for graphing and alerting.
-   metrics.RecordStateMovement(action, payload, transitionInfo)
+func MetricsRecording(action plinko.StateAction, payload plinko.Payload, transitionInfo plinko.TransitionInfo) {
+	// this can be a simple function that pulls apart the details and sends them to
+	// things like graphite, influx or any timeseries metrics database for graphing and alerting.
+	metrics.RecordStateMovement(action, payload, transitionInfo)
 }
-
 ```
 
 
@@ -307,45 +313,45 @@ State Machine error handling follows the same pattern that we see in golang in g
 While the `OnEntry` and `OnExit` function definitions take a `TransitionInfo` parameter that is immutable, and error operation is defined with a `ModifiableTransitionInfo` interface that allows the function to change the `DestinationState`.  In addition, the function also accepts the error raised during the `On[Entry|Exit]` operation so it can be interrogated when necessary.  The definition of an error operation handler looks like this:
 
 ```go
- ErrorOperation func(Payload, ModifiableTransitionInfo, error) (Payload, error)
+type ErrorOperation func(context.Context, Payload, ModifiableTransitionInfo, error) (Payload, error)
 ```
 
 An ErrorOperation function implements this signature and tests the error case.  Here is an example where we redirect based on a match.
 
 ```go
-func RedirectOnDeactivatedCustomer(p Payload, m ModifiableTransitionInfo, e error) (Payload, error) {
-   if e == DeactivatedCustomerError {
-      m.SetDestination(DeactivatedTriage)
-      return RecordOrder(p, m)
-   }
+func RedirectOnDeactivatedCustomer(ctx context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+	if e == DeactivatedCustomerError {
+		m.SetDestination(DeactivatedTriage)
+		return RecordOrder(ctx, p, m)
+	}
 
-   // we didn't identify the error, so we'll pass this through for further error handling
-   return p, nil
+	// we didn't identify the error, so we'll pass this through for further error handling
+	return p, nil
 }
 ```
 
 There are a couple things to note.   If you return a non-nil `error` during an `OnError` routine, this is regarded as a fatal error that is floated to the caller who initiated the `.Fire(..)` command.  This condition is floated to the registered SideEffect handlers as well.
 
-Some key pieces to remember when building up a set of error handlers.    First, you don't have to handle _every_ error case.  This is done by returning `(payload, nil)`) to the caller.  Plinko will call any subsequent error handlers in this case to give each handler an opportunity to perform it's role in the set of operations.  This is powerful, as handlers can take on different aspects of error handling, including custom messaging and metrics. This allows these functions to be simple, focused operations that compose a larger set of responsiblities (through additional functions) when an error occurs.
+Some key pieces to remember when building up a set of error handlers.    First, you don't have to handle _every_ error case.  This is done by returning `(payload, nil)`) to the caller.  Plinko will call any subsequent error handlers in this case to give each handler an opportunity to perform it's role in the set of operations.  This is powerful, as handlers can take on different aspects of error handling, including custom messaging and metrics. This allows these functions to be simple, focused operations that compose a larger set of responsibilities (through additional functions) when an error occurs.
 
 Lastly, here is a sample plinko configuration that uses error handling to perform the proper state destination redirect shown above when an order transitions to `Opened` and the user has been deactivated.  Note the separation of concerns - one to perform the redirect and save state, and the other to perform a system notification.
 
 ```golang
 p.Configure(Created).
-   Permit(Open, Opened).
-   Permit(Cancel, Canceled)
+	Permit(Open, Opened).
+	Permit(Cancel, Canceled)
 
 p.Configure(Opened).
-   OnEntry(OnOrderOpen).
-   OnError(RedirectOnDeactivatedCustomer).
-   OnError(GenerateSlackMessageNotification).
-   Permit(AddItemToOrder, Opened).
-   Permit(Claim, Claimed).
-   Permit(Cancel, Canceled)
+	OnEntry(OnOrderOpen).
+	OnError(RedirectOnDeactivatedCustomer).
+	OnError(GenerateSlackMessageNotification).
+	Permit(AddItemToOrder, Opened).
+	Permit(Claim, Claimed).
+	Permit(Cancel, Canceled)
 ```
 
 ## Panic Support
-On calls to Entry or Exit Functions, Plinko will capture any panics.  These panics are recorded as a structured error, containing when and where the error occured.  The `OnError` handlers can then respond as appropriate.
+On calls to Entry or Exit Functions, Plinko will capture any panics.  These panics are recorded as a structured error, containing when and where the error occurred.  The `OnError` handlers can then respond as appropriate.
 
 ## State Machine self-documentation
 The fsm can document itself upon a successful compile - emitting PlantUML which can, in turn, be rendered into a state diagram:
@@ -354,11 +360,10 @@ The fsm can document itself upon a successful compile - emitting PlantUML which 
 uml, err := p.RenderUml()
 
 if err != nil {
-   // exit...
+	// exit...
 }
 
 fmt.Println(string(uml))
 ```
 
 ![PlantUML Rendered State Diagram](./docs/sample_state_diagram.png)
-
