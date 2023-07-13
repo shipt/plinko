@@ -312,16 +312,16 @@ State Machine error handling follows the same pattern that we see in golang in g
 While the `OnEntry` and `OnExit` function definitions take a `TransitionInfo` parameter that is immutable, and error operation is defined with a `ModifiableTransitionInfo` interface that allows the function to change the `DestinationState`.  In addition, the function also accepts the error raised during the `On[Entry|Exit]` operation so it can be interrogated when necessary.  The definition of an error operation handler looks like this:
 
 ```go
- ErrorOperation func(Payload, ModifiableTransitionInfo, error) (Payload, error)
+type ErrorOperation func(context.Context, Payload, ModifiableTransitionInfo, error) (Payload, error)
 ```
 
 An ErrorOperation function implements this signature and tests the error case.  Here is an example where we redirect based on a match.
 
 ```go
-func RedirectOnDeactivatedCustomer(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
+func RedirectOnDeactivatedCustomer(ctx context.Context, p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 	if e == DeactivatedCustomerError {
 		m.SetDestination(DeactivatedTriage)
-		return RecordOrder(p, m)
+		return RecordOrder(ctx, p, m)
 	}
 
 	// we didn't identify the error, so we'll pass this through for further error handling
