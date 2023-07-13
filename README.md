@@ -58,22 +58,28 @@ The state machine can provide a list of triggers for a given state to provide si
 A state machine is created by articulating the states,  the triggers that can be used at each state and the destination state where they land. Here is a sample declaration of the states and triggers we will use:
 
 ```go
-const Created          State = "Created"
-const Opened           State = "Opened"
-const Claimed          State = "Claimed"
-const ArriveAtStore    State = "ArrivedAtStore"
-const MarkedAsPickedUp State = "MarkedAsPickedup"
-const Delivered        State = "Delivered"
-const Canceled         State = "Canceled"
-const Returned         State = "Returned"
+import (
+	"context"
 
-const Submit    Trigger = "Submit"
-const Cancel    Trigger = "Cancel"
-const Open      Trigger = "Open"
-const Claim     Trigger = "Claim"
-const Deliver   Trigger = "Deliver"
-const Return    Trigger = "Return"
-const Reinstate Trigger = "Reinstate"
+	 "github.com/shipt/plinko"
+)
+
+const Created          plinko.State = "Created"
+const Opened           plinko.State = "Opened"
+const Claimed          plinko.State = "Claimed"
+const ArriveAtStore    plinko.State = "ArrivedAtStore"
+const MarkedAsPickedUp plinko.State = "MarkedAsPickedup"
+const Delivered        plinko.State = "Delivered"
+const Canceled         plinko.State = "Canceled"
+const Returned         plinko.State = "Returned"
+
+const Submit    plinko.Trigger = "Submit"
+const Cancel    plinko.Trigger = "Cancel"
+const Open      plinko.Trigger = "Open"
+const Claim     plinko.Trigger = "Claim"
+const Deliver   plinko.Trigger = "Deliver"
+const Return    plinko.Trigger = "Return"
+const Reinstate plinko.Trigger = "Reinstate"
 ```
 
  Below, a state machine is created describing a set of states an order can progress through along with the triggers that can be used.
@@ -275,7 +281,7 @@ In addition, we registered a FilteredSideEffect that only gets called on the req
 These are functions that have signature including the starting state, the destination state, the trigger used to kick off the transition and the payload.
 
 ```go
-func StateLogging(action StateAction, payload Payload, transitionInfo TransitionInfo) {
+func StateLogging(action plinko.StateAction, payload plinko.Payload, transitionInfo plinko.TransitionInfo) {
 	// this can typically be broken out into a function on the logger, but keeping
 	// it here for clarity in demonstration
 
@@ -291,7 +297,7 @@ func StateLogging(action StateAction, payload Payload, transitionInfo Transition
 	logger.LogStateInfo(logEntry)
 }
 
-func MetricsRecording(action StateAction, payload Payload, transitionInfo TransitionInfo) {
+func MetricsRecording(action plinko.StateAction, payload plinko.Payload, transitionInfo plinko.TransitionInfo) {
 	// this can be a simple function that pulls apart the details and sends them to
 	// things like graphite, influx or any timeseries metrics database for graphing and alerting.
 	metrics.RecordStateMovement(action, payload, transitionInfo)
@@ -312,7 +318,7 @@ While the `OnEntry` and `OnExit` function definitions take a `TransitionInfo` pa
 An ErrorOperation function implements this signature and tests the error case.  Here is an example where we redirect based on a match.
 
 ```go
-func RedirectOnDeactivatedCustomer(p Payload, m ModifiableTransitionInfo, e error) (Payload, error) {
+func RedirectOnDeactivatedCustomer(p plinko.Payload, m plinko.ModifiableTransitionInfo, e error) (plinko.Payload, error) {
 	if e == DeactivatedCustomerError {
 		m.SetDestination(DeactivatedTriage)
 		return RecordOrder(p, m)
